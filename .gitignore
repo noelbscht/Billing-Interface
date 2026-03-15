@@ -1,0 +1,39 @@
+### Java & Build Tools ###
+*.class
+/target/
+/build/
+/.gradle/
+/bin/
+*.jar
+*.war
+
+### Sensible ###
+*.env
+! .env.example
+application-local.properties
+application-local.yml
+*.jks
+*.p12
+
+### IDEs ###
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+
+# Eclipse
+.settings/
+.project
+.classpath
+.factorypath
+
+# VS Code
+.vscode/
+
+### OS ###
+.DS_Store
+Thumbs.db
+
+### Testing ###
+/web/
+/requirements/
