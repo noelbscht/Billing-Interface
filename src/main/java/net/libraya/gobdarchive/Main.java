@@ -7,12 +7,14 @@ import java.util.ArrayList;
 import net.libraya.gobdarchive.archive.ArchiveManager;
 import net.libraya.gobdarchive.cli.CLI;
 import net.libraya.gobdarchive.cli.Command;
+import net.libraya.gobdarchive.service.ServiceHandler;
 import net.libraya.gobdarchive.utils.Unicodes;
 
 public class Main {
 	
 	private static final CLI commandInterface = new CLI();
 	private static final ArchiveManager archiveManager = new ArchiveManager();
+	private static final ServiceHandler serviceHandler = new ServiceHandler();
 	
 	public static void main(String[] args) {
 		// interrupt if not compatible, bypass option for testing purposes.
@@ -103,5 +105,9 @@ public class Main {
 	
 	public static ArchiveManager getArchiveManager() {
 		return archiveManager;
+	}
+	
+	public static ServiceHandler getServicehandler() {
+		return serviceHandler;
 	}
 }
