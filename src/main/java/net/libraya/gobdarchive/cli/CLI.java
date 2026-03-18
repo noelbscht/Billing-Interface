@@ -8,6 +8,7 @@ import net.libraya.gobdarchive.cli.commands.CommandCommit;
 import net.libraya.gobdarchive.cli.commands.CommandList;
 import net.libraya.gobdarchive.cli.commands.CommandLog;
 import net.libraya.gobdarchive.cli.commands.CommandVerify;
+import net.libraya.gobdarchive.cli.commands.CommandWeb;
 
 public class CLI {
 	
@@ -18,6 +19,7 @@ public class CLI {
 		this.commands.add(new CommandVerify());
 		this.commands.add(new CommandLog());
 		this.commands.add(new CommandList());
+		this.commands.add(new CommandWeb());
 	}
 	
 	public boolean isCommand(String[] args) {
