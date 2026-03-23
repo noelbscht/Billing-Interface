@@ -29,6 +29,10 @@ public class Service extends NanoHTTPD {
         logger.log(this.title + " listening on http://127.0.0.1:" + this.getListeningPort());
 	}
 	
+	public void log(String msg) {
+		this.logger.log(msg);
+	}
+	
 	public boolean hasChanged() {
 	    return logger.hasChanged();
 	}
