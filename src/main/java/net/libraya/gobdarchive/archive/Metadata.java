@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -27,6 +26,7 @@ public class Metadata {
 	protected final CommitType origin;
 	protected final String hash;
 	protected final Path path;
+	protected String timestamp;
 	
 	public Metadata(EntryType type,
 			CommitType origin, 
@@ -70,13 +70,16 @@ public class Metadata {
             JSONObject obj = new JSONObject();
             String[] requirements = new String[] {
             		"user_reference_id", // default, example references
-            		"stripe_bill_reference"
+            		"stripe_bill_url"
             };
             
             obj.put("requirements", requirements);
             FilesUtil.writeString(customMetadataPath, obj.toString(4), new String[] {
             		// commentaries
-            		"A list to customly force requirements for commits."
+            		"A list to manually enforce requirements for commits.",
+            		"",
+            		"The following keys must be added manually, regardless if",
+            		"by api usage, or by typing them in the web interface."
             });
         }
 
@@ -98,22 +101,21 @@ public class Metadata {
 	}
 	
 	/*
-	 * generate and return necessary requirements (should be only used once)
+	 * return necessary requirements
 	 * */
 	private JSONObject getNecessaryRequirements() {
-		
 		JSONObject requirements = new JSONObject();
 		
-		requirements.put("archiveId", this.archiveId);
-		requirements.put("entryType", this.type.name());
-		requirements.put("commitmentType", this.origin.name()); // cli, api, sdk
-		requirements.put("timestamp", Instant.now().toString());
+		requirements.put("archive_id", this.archiveId);
+		requirements.put("entry_type", this.type.name());
+		requirements.put("commitment_type", this.origin.name()); // cli, api, sdk
+		requirements.put("timestamp", this.timestamp);
 		requirements.put("hash", this.hash);
-		requirements.put("filePath", this.path.toString());
+		requirements.put("file_path", this.path.toString());
 		
 		return requirements;
 	}
-	
+
 	/**
 	 * builds and returns the final metadata object containing:
 	 * - all internal GoBD-required fields

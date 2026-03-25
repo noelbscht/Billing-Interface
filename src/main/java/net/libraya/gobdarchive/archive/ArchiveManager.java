@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.json.JSONObject;
 
+import net.libraya.gobdarchive.archive.option.LogDetails;
 import net.libraya.gobdarchive.archive.option.ExportOptions;
 import net.libraya.gobdarchive.archive.option.QueryFilterOptions;
 import net.libraya.gobdarchive.utils.Environment;
@@ -27,14 +28,17 @@ public class ArchiveManager {
 
 	}
 	
-	public void commit(Metadata metadata) throws Exception {
-		JSONObject requirements = metadata.getFinalMetadata();
+	public void commit(Metadata metadata, int actorId, LogDetails details) throws Exception {
+		// set final timestamp
+	    metadata.timestamp = getISOTimestamp();
 		
 		if (metadata.isCustomForced()) {
 			if (!metadata.isFilledUp()) {
 				throw new MetadataException("Required metadata fields are missing. \n" + metadata.getCustomRequirementKeys());
 			}
 		}
+		
+		JSONObject requirements = metadata.getFinalMetadata();
 		
 	    // archive path
 	    Path targetDir = getArchivePath(metadata.archiveId, metadata.type);
@@ -43,7 +47,7 @@ public class ArchiveManager {
 	    // copy file
 	    Path targetFile = targetDir.resolve(metadata.path.getFileName());
 	    Files.copy(metadata.path, targetFile);
-
+	    
 	    // write metadata.json
 	    Files.writeString(targetDir.resolve("metadata.json"), requirements.toString(2));
 
@@ -51,7 +55,11 @@ public class ArchiveManager {
 	    Files.writeString(targetDir.resolve("hash.txt"), metadata.hash);
 
 	    // write log
-	    logCommit(metadata.archiveId, metadata.hash);
+	    if (details.getDetails().containsKey(LogDetails.RELATION_KEY)) {
+	    	writeLogEntry(LogAction.COMMIT_UPDATE, metadata.timestamp, actorId, metadata.hash, LogActionStatus.SUCCESS, details);
+	    } else {
+	    	writeLogEntry(LogAction.COMMIT_CREATE, metadata.timestamp, actorId, metadata.hash, LogActionStatus.SUCCESS, details);
+	    }
 
 	    // set immutable
 	    makeImmutable(targetDir);
@@ -62,7 +70,11 @@ public class ArchiveManager {
 	    }
 	}
 
-	public VerificationResult verify(String archiveId) throws Exception {
+	private String getISOTimestamp() {
+		return LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME);
+	}
+
+	public VerificationResult verify(String archiveId, int actorId, LogDetails details) throws Exception {
 	    VerificationResult result = new VerificationResult();
 	    
 	    // sender provided a path like 2026/02/000003-invoice
@@ -163,7 +175,12 @@ public class ArchiveManager {
             String contentWithoutPrev = line.substring(0, idx).trim();
             lastHash = HashUtil.sha256(contentWithoutPrev);
         }
-
+        
+        // write log entry
+        LogActionStatus status = result.isSuccess() ? LogActionStatus.SUCCESS : LogActionStatus.FAILURE;
+        
+        writeLogEntry(LogAction.VERIFY, getISOTimestamp(), actorId, recalculatedHash, status, details);
+        
         return result;
     }
 	
@@ -237,7 +254,7 @@ public class ArchiveManager {
 	}
 	
 	
-	public Path exportSingle(String archiveId, ExportOptions options) throws Exception {
+	public Path exportSingle(String archiveId, int actorId, LogDetails details, ExportOptions options) throws Exception {
 	    JSONObject meta = show(archiveId);
 	    Path folder = findArchiveFolder(archiveId);
 
@@ -255,7 +272,13 @@ public class ArchiveManager {
 
 	    Path zip = tempDir.resolve("export.zip");
 	    ZipUtil.zipFolder(tempDir, zip);
-
+	    
+	    // log export
+	    String hash = HashUtil.sha256(zip); // Hash des fertigen Export-Pakets
+	    details.put(LogDetails.ARCHIVE_ID, archiveId);
+	    details.put(LogDetails.EXPORT_OPTIONS, options.toString());
+	    writeLogEntry(LogAction.EXPORT_SINGLE, getISOTimestamp(), actorId, hash, LogActionStatus.SUCCESS, details);
+	    
 	    return zip;
 	}
 	
@@ -452,27 +475,36 @@ public class ArchiveManager {
 
         return HashUtil.sha256(contentWithoutPrev);
     }
-
-    private void writeLogEntry(LocalDateTime timestamp, String archiveId, String hash) throws IOException {
-
+    
+    private void writeLogEntry(LogAction action, String timestamp, int actorId, String hash, LogActionStatus status, LogDetails details) throws IOException {
         String prevHash = getLastLogHash();
-
-        String entry = timestamp.format(DateTimeFormatter.ISO_DATE_TIME)
-                + " | COMMIT | " + archiveId
-                + " | sha256=" + hash
-                + " | prevHash=" + prevHash
-                + "\n";
+        
+        String actor = actorId != -1 ? "userId=" + actorId : "actor=system";
+        String finalDetails = details != null ? details.getDetailsFormatted() : "/";
+        
+        String entry = String.format("%s | action=%s | %s | details=%s | status=%s | sha256=%s | prevHash=%s\n",
+        		timestamp, action, actor, finalDetails, status, hash, prevHash);
 
         Files.writeString(
-        	Environment.LOG_FILE,
+            Environment.LOG_FILE,
             entry,
             StandardOpenOption.CREATE,
             StandardOpenOption.APPEND
         );
     }
-
-    private void logCommit(String archiveId, String hash) throws IOException {
-        writeLogEntry(LocalDateTime.now(), archiveId, hash);
+    
+    protected enum LogAction {
+    	EXPORT_FILTERED,
+    	EXPORT_SINGLE,
+    	EXPORT_ALL,
+    	VERIFY,
+    	COMMIT_CREATE,
+    	COMMIT_UPDATE
+    }
+    
+    protected enum LogActionStatus {
+    	SUCCESS,
+    	FAILURE
     }
 
     private void makeImmutable(Path file) {
@@ -501,5 +533,4 @@ public class ArchiveManager {
             System.err.println("Warning: Could not set append-only flag for log file.");
         }
     }
-
 }
