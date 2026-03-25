@@ -16,7 +16,7 @@ public class Environment {
 	
 	// ArchiveManager
 	public static final Path ARCHIVE_ROOT = getPath("ARCHIVE_ROOT_PATH", "/var/lib/libraya-billing/archive");
-	public static final Path LOG_FILE = getPath("LOG_FILE_PATH", "/var/lib/libraya-billing" + "/audit.log");
+	public static final Path LOG_FILE = getPath("LOG_FILE_PATH", "/var/lib/libraya-billing").resolve("audit.log").normalize();
 	
 	// Metadata
 	public static final boolean CUSTOM_REQUIREMENTS_FORCED = getBoolean("CUSTOM_REQUIREMENTS_FORCED", true);
