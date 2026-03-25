@@ -16,22 +16,22 @@ public class FilesUtil {
 	 * */
 	public static Path writeString(Path path, CharSequence csq, Charset cs, String [] comments, OpenOption... opt) throws IOException {
 		String[] legalNotice = new String[] {
-				"#		### This configuration is part of libraya.net " + Unicodes.COPYRIGHT + " content. ###\n",
-				"# 		    All rights reserved\n",
-				"#\n"
+				"### This configuration is part of libraya.net " + Unicodes.COPYRIGHT + " content. ###",
+				"#	 All rights reserved",
+				"#"
 		};
  		
 		// write legal notice and commentaries to content
 		StringBuilder sb = new StringBuilder();
 		for (String ln : legalNotice) {
-			sb.append(ln);
+			sb.append(ln + "\n");
 		}
 		for (int i = 0; i < comments.length + 2; i++) {
 			if (i < comments.length) {
 				sb.append("# " + comments[i] +"\n");
 			}
-			sb.append("#\n");
 		}
+		sb.append("#\n");
 		return Files.writeString(path, (sb.toString() + csq), cs, opt);
 	}
 	
