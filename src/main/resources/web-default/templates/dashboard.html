@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Billing Interface - GoBD Archiv</title>
+
+    {{ headsection }}
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <script type="text/javascript" src="/static/js/viewloader.js"></script>
+</head>
+<body>
+	<div class="dashboard-wrapper">
+		<div class="dashboard-container">
+			<h5 class="db-headline">
+            	<img width="40" class="bg-dark" src="/static/img/icon.png">
+                Billing-Interface
+                <br>
+                Dashboard
+            </h1>
+            <span class="db-hr"></span>
+            <span class="db-info"><i class="fas fa-cloud"></i>Systeminformationen</span>
+            <a class="db-item" href="#backup" onclick="loadView(0)">Statistik</a>
+            <a class="db-item" href="#backup" onclick="loadView(1)">Backupsystem</a>
+            <span class="db-hr"></span>
+            <span class="db-info"><i class="fa-solid fa-box-archive"></i> Archiv</span>
+            <a class="db-item" href="#entries" onclick="loadView(2)">Dokumente einsehen</a>
+            <a class="db-item" href="#upload" onclick="loadView(3)">Datei hochladen</a>
+            <a class="db-item" href="#export" onclick="loadView(4)">Exportieren</a>
+            <span class="db-hr"></span>
+            <a class="exit-btn" href="/">
+                <i class="fa-solid fa-house"></i>
+                Startseite
+            </a>
+        </div>
+        <div class="dashboard-page">
+            
+            <!-- views -->
+            <div class="element-box" data-viewid="0">
+            	<h4>Statistiken</h4>
+            	<hr>
+            	<dt>Dateien insgesamt</dt>  <dd> 24</dd>
+            </div>
+            
+            <div class="element-box" data-viewid="1">
+	           	<h4>
+	           		Backupsystem
+	           		<span class="env-pill">
+						<span class="env-dot {% if !api_active %}inactive{% /if %}"></span>
+						{% if api_active %}
+						<span>Aktiv</span>
+						{% else %}
+						<span>Inaktiv</span>
+						{% /if %}
+			        </span>
+	           	</h4>
+	           	<hr>
+	           	<dl>
+			  		<dt>Letztes Backup</dt>  <dd> {{ backupsys.getLastBackupDate() }}</dd>
+				  	<dt>Backup Server</dt> <dd>{{ backupsys.isAvailable() }}</dd>
+				</dl>
+           </div>
+            
+            <form method="POST" name="filter" class="element-box" data-viewid="2">
+            	<h3>Liste</h3>
+            	<input type="text" name="filter-options" class="hidden">
+            	<input type="submit" name="" value="Filter anpassen" class="btn btn-primary">
+            	<hr>
+       			
+            	<table class="file-table">
+				    <tr class="headline-row">
+				        <td class="headline-col"> </td>
+				        <td class="headline-col">Datei</td>
+				        <td class="headline-col">Aktionen</td>
+				    </tr>
+					
+					{% if !entries.isEmpty() %}
+					{% iterate ent : entries %}
+				    <tr class="tbl-itm-row">
+				        <td class="tbl-itm-col">
+				            <i class="fa-solid fa-file-pdf" style="color: rgb(193, 108, 85);"></i>
+				        </td>
+				
+				        <td class="tbl-itm-col stretched">{{ent}}</td>
+				
+				        <td class="tbl-itm-col">
+				            <button class="tbl-btn"><i class="fa-duotone fa-solid fa-eye fa-2xs"></i>Ansicht</button>
+				            <button class="tbl-btn"><i class="fa-duotone fa fa-check fa-2xs" aria-hidden="true"></i>Validieren</button>
+				            <button class="tbl-btn"><i class="fa-duotone fa fa-download fa-2xs" aria-hidden="true"></i>Exportieren</button>
+				        </td>
+				    </tr>
+				    {% /iterate %}
+				    {% else %}
+				    <tr class="tbl-itm-row">
+				        <td class="tbl-itm-col">
+				        	<i class="fa-regular fa-file" style="color: rgb(193, 108, 85);"></i>
+				            <!--<i class="fa-solid fa-file-excel" style="color: rgb(193, 108, 85);"></i>
+				            <i class="fa-regular fa-image" style="color: rgb(193, 108, 85);"></i>
+				            <i class="fa-solid fa-file-csv" style="color: rgb(193, 108, 85);"></i>
+				            <i class="fa-solid fa-file-lines" style="color: rgb(193, 108, 85);"></i>-->
+
+				        </td>
+				
+				        <td class="tbl-itm-col stretched">/</td>
+				
+				        <td class="tbl-itm-col">
+				            <button class="tbl-btn" disabled><i class="fa-duotone fa-solid fa-eye fa-2xs"></i>Ansicht</button>
+				            <button class="tbl-btn" disabled><i class="fa-duotone fa fa-check fa-2xs" aria-hidden="true"></i>Validieren</button>
+				            <button class="tbl-btn" disabled><i class="fa-duotone fa fa-download fa-2xs" aria-hidden="true"></i>Exportieren</button>
+				        </td>
+				    </tr>
+				    {% /if %}
+				</table>
+			            	
+            </form>
+            
+            <form class="element-box" data-viewid="3">
+            	<h3>Hochladen</h3>
+            	<hr>
+            	
+            </form>
+            <form class="element-box" data-viewid="4">
+            	<h3>Exportieren</h3>
+            	<hr>
+            	
+            </form>
+            <!-- /views -->
+        </div>
+    </div>
+    {{ messagescript }}
+</body>
+
+</html>

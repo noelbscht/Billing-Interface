@@ -1,0 +1,15 @@
+<div class="nav-container-centered">
+    <div class="nav-centered">
+        <a class="nav-logo" href="/"><img width="64px" src="/static/img/icon.png">Billing-Interface</a>
+        <a class="nav-itm" href="/dashboard">Dashboard</a>
+        {% if !loggedIn %}
+        <a href="/login" class="nav-profile">
+            <i class="fas fa-sign-in-alt"></i> Login
+        </a>
+        {% else %}
+        <a href="/logout" class="nav-profile">
+            <i class="fas fa-sign-in-alt fa-rotate-180"></i> Logout
+        </a>
+        {% /if %}
+    </div>
+</div>

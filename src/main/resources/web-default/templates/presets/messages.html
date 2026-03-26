@@ -1,0 +1,9 @@
+<script type="text/javascript">
+{% if messages %}
+window.addEventListener('load', function() {
+{% iterate msg, category : messages %}
+	sendMessage('{{ msg }}', '{{ category }}', 5);
+{% /iterate %}
+});
+{% /if %}
+</script>

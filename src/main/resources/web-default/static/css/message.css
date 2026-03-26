@@ -1,0 +1,37 @@
+.flash-text {
+	position: absolute;
+    font-size: 19px;
+	max-width: 37vw;
+	height: auto;
+	white-space: normal;
+	text-shadow: 2px 2px 3px black;
+	top: 9vh;
+	right: 2vw;
+	border-radius: 20px;
+	padding: 11px 16px 11px 16px;
+	background-color: #999;
+	color: white;
+	box-shadow: 0px 0px 15px 2px #fff;
+	z-index: 2000;
+	-webkit-user-select: none; /* Safari */
+    -moz-user-select: none;    /* Firefox */
+    -ms-user-select: none;     /* Internet Explorer/Edge */
+    user-select: none;         /* Standard-Syntax */
+}
+
+@media (max-width: 950px) {
+    .flash-text {
+        padding: 10px 15px 10px 15px !important;
+        font-size: 19px !important;
+    }
+}
+
+
+.flash-err {
+	background-color: #d66a6a !important;
+}
+
+.flash-succ {
+	background-color: #9dc49d !important;
+}
+

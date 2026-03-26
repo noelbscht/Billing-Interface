@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Billing Interface - GoBD Archiv</title>
+    {{ headsection }}
+    <link rel="stylesheet" href="/static/css/api_doc.css">
+</head>
+<body>
+	{{ navigation }}
+	<div class="doc-container">
+		<main class="layout">
+    <!-- Linke Seite: Routenübersicht -->
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Routen</div>
+        </div>
+        <div class="env-pill">
+          <span class="env-dot {% if !api_active %}inactive{% /if %}"></span>
+           {% if api_active %}
+          <span>Aktiv</span>
+          {% else %}
+          <span>Inaktiv</span>
+          {% /if %}
+        </div>
+      </div>
+
+      <div class="base-url">
+        <span>{{ base_url }}/api</span>
+        <button class="copy-btn" data-copy="{{BASE_URL}}/api">
+          <span>kopieren</span>
+        </button>
+      </div>
+
+      <div class="tag-row">
+        <span class="tag">JSON</span>
+        <span class="tag">HTTP-Statuscodes</span>
+      </div>
+
+      <h2 class="section-title">Schnittstellen: </h2>
+      {{ routelist }}
+    </section>
+
+    <!-- Rechte Seite: Semantik, Beispiele, Konventionen -->
+    <aside class="panel">
+      <div class="panel-header">
+        <div class="panel-title">Konventionen & Beispiele</div>
+      </div>
+
+      <div class="pill-row">
+        <span class="pill pill-verb">GET = lesen</span>
+        <span class="pill pill-verb">POST = erstellen</span>
+        <span class="pill pill-verb">PUT = ersetzen</span>
+        <span class="pill pill-verb">DELETE = löschen</span>
+      </div>
+
+      <h2 class="section-title">Beispiel-Request</h2>
+      <div class="json-block">
+		<span class="json-key">GET</span> <span class="json-str">{{base_url}}/api/archive/commit</span>
+      </div>
+
+      <h2 class="section-title">Beispiel-Response</h2>
+      <div class="json-block">
+		<span class="json-punc">{</span>
+		  <span class="json-key">"createdAt"</span>: <span class="json-str">"{{ISO_TIMESTAMP}}"</span>,
+		<span class="json-punc">}</span>
+      </div>
+
+      <h2 class="section-title">Statuscodes</h2>
+      <div class="json-block">
+		<span class="json-key">200</span>: <span class="json-str">"OK – erfolgreiche Anfrage"</span>
+		<span class="json-key">201</span>: <span class="json-str">"Created – Ressource erstellt"</span>
+		<span class="json-key">204</span>: <span class="json-str">"No Content – kein Body"</span>
+		<span class="json-key">400</span>: <span class="json-str">"Bad Request – ungültige Daten"</span>
+		<span class="json-key">401</span>: <span class="json-str">"Unauthorized – Authentifizierung fehlt"</span>
+		<span class="json-key">404</span>: <span class="json-str">"Not Found – Ressource existiert nicht"</span>
+		<span class="json-key">409</span>: <span class="json-str">"Conflict – z.B. Duplikat"</span>
+		<span class="json-key">500</span>: <span class="json-str">"Internal Server Error"</span>
+      </div>
+    </aside>
+  </main>
+
+	</div>
+	<script>
+	    // Kleines Komfort-Feature: Base-URL kopieren
+	    document.addEventListener("click", (event) => {
+	      const btn = event.target.closest(".copy-btn");
+	      if (!btn) return;
+	
+	      const value = btn.getAttribute("data-copy");
+	      if (!navigator.clipboard || !value) return;
+	
+	      navigator.clipboard.writeText(value).then(() => {
+	        const original = btn.textContent.trim();
+	        btn.textContent = "kopiert";
+	        setTimeout(() => (btn.textContent = original), 1200);
+	      });
+	    });
+    </script>
+    {{ footer }}
+    {{ messagescript }}
+</body>
+</html>

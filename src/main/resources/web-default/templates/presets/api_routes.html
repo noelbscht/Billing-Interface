@@ -1,0 +1,12 @@
+<div class="routes">
+	{% iterate r : routes %}
+	<article class="route">
+		{% iterate method : r.getMethods() %}
+		<div class="method method-post">{{ method }}</div>
+		{% /iterate %}
+		<div class="path">/api/{{ r.getRule() }}</div>
+		<div class="desc">{{ r.getDescription() }}</div>
+		<div class="badge badge-auth">authentication needed</div>
+	</article>
+	{% /iterate %}
+</div>

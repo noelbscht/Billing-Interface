@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Billing Interface - GoBD Archiv</title>
+	{{ headsection }}
+</head>
+<body>
+{{ navigation }}
+<form method="POST">
+    <div class="element-box">
+        <h1>Login:</h1>
+        <hr>
+        <label for="email">
+            E-Mail:
+        </label>
+        <input type="text" class="form-control sp-btm" name="email" placeholder="E-Mail" id="email" required>
+        <label for="password">
+            Passwort:
+        </label>
+        <input type="password" class="form-control sp-btm" name="password" id="password" placeholder="Passwort" required>
+        <br>
+        <p><input class="btn btn-dark" type="submit" value="Login" name="login"></p>
+        <hr>
+        <p>Du bist noch nicht registriert?</p>
+        <a href="/register">Registrierung beantragen</a>
+    </div>
+</form>
+{{ footer }}
+{{ messagescript }}
+</body>
+</html>
