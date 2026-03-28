@@ -3,6 +3,7 @@ Ein GoBD-orientiertes Archivsystem
 *(in Entwicklung)*
 
 <img src="src/main/resources/documentation/img/web_interface/index.png" style="width: 100%;">
+
 ---
 
 ## 📌 Überblick
@@ -19,7 +20,7 @@ Das System bietet:
 - eine **MySQL-basierte, anpassbare Benutzerverwaltung** für das Webinterface  
 - flexible **Konfiguration über `.env` und weitere Konfigurationsdateien**  
 - ein **GoBD-orientiertes Archivierungsmodell** mit Audit-Log und Metadaten
-- eine einfache Templating-Language inspiriert von Jinja2
+- eine einfache [Templating-Language](/TEMPLATING_README.md) inspiriert von Jinja2
 
 > ⚠️ **Wichtig:**  
 > Das Projekt ist **ausschließlich unter Linux lauffähig**, da Terminal-Steuerung, Dateirechte und Systembefehle Linux-spezifisch sind.
