@@ -83,7 +83,7 @@ public class TemplatingHelper {
 	    if (fullKey == null || fullKey.isEmpty()) return null;
 	    
 	    // if method chaining
-	    if (fullKey.contains(".")) {
+	    if (fullKey.contains(".")|| fullKey.contains("(")) {
 	        int dotIndex = fullKey.indexOf(".");
 	        String rootKey = fullKey.substring(0, dotIndex);
 	        String path = fullKey.substring(dotIndex + 1);

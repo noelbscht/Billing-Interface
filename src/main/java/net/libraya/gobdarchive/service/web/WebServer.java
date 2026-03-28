@@ -223,9 +223,9 @@ public class WebServer extends Service {
     }
     
     /**
-     * return if the UID cookie provides all required permissions.
+     * return if the UID cookie provides all required permissions for a route.
      * */
-    private boolean isAuthorized(IHTTPSession session, WebRoute handler, SessionHelper sessionHelper) throws IOException, SQLException {
+    public boolean isAuthorized(IHTTPSession session, WebRoute handler, SessionHelper sessionHelper) throws IOException, SQLException {
     	WebPermission[] permissions = handler.getPermissions();
     	
     	if (permissions == null || permissions.length == 0) {

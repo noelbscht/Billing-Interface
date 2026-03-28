@@ -1,6 +1,7 @@
 package net.libraya.gobdarchive.service.web.templating;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -11,6 +12,7 @@ import java.util.regex.Pattern;
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import net.libraya.gobdarchive.service.web.WebServer;
 import net.libraya.gobdarchive.service.web.auth.SessionHelper;
+import net.libraya.gobdarchive.service.web.auth.WebPermission;
 import net.libraya.gobdarchive.utils.exception.TemplatingException;
 
 public class SimpleTemplating {
@@ -24,18 +26,27 @@ public class SimpleTemplating {
 		this.ws = ws;
 		this.sessionHelper = sessionHelper;
 		this.context = new HashMap<String, Object>();
-		//todo:: feat: 'addMethod' function with synonym-parameter. 
 		//todo:: feat: recursive iteration
 		//todo:: perf: template caching for better performance
 	}
 	
 	public void addDefaults(IHTTPSession session) throws Exception {
+		// session and authorization
 		addVariable("messages", sessionHelper.getMessages());
 		addVariable("loggedIn", sessionHelper.isLoggedIn());
+		addVariable("uid", sessionHelper.getSessionData().optString("uid", null));
+		addVariable("WebPermission", WebPermission.class);
+		addMethod("isAuthorized", ws.getPermissionLoader().getClass().getMethod("isAuthorized", String.class, WebPermission.class));
+		
+		// partials
 		addPartial(ws, "headsection", "presets/headsection.html");
 		addPartial(ws, "navigation", "presets/navigation.html");
 		addPartial(ws, "footer", "presets/footer.html");
 		addPartial(ws, "messagescript", "presets/messages.html");
+	}
+	
+	public void addMethod(String syntax, Method method) {
+		addVariable(syntax, method);
 	}
 	
 	/**
