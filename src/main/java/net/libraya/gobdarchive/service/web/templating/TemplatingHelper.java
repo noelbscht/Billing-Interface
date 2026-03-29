@@ -1,11 +1,14 @@
 package net.libraya.gobdarchive.service.web.templating;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.libraya.gobdarchive.utils.exception.TemplatingException;
 
 public class TemplatingHelper {
+	
+	public static final ConcurrentHashMap<String, CachedTemplate> CACHE = new ConcurrentHashMap<String, CachedTemplate>();
 	
 	/**
 	 * return object itself if no method chaining, otherwise return last function output.
@@ -79,7 +82,7 @@ public class TemplatingHelper {
 		return args;
 	}
 	
-	public static Object getValue(HashMap<String, Object> context, String fullKey) throws TemplatingException {
+	public static Object getValue(Map<String, Object> context, String fullKey) throws TemplatingException {
 	    if (fullKey == null || fullKey.isEmpty()) return null;
 	    
 	    // if method chaining
@@ -96,7 +99,7 @@ public class TemplatingHelper {
 	    return context.get(fullKey);
 	}
 	
-	public static boolean solveCondition(HashMap<String, Object> context, String headTag) throws TemplatingException {
+	public static boolean solveCondition(Map<String, Object> context, String headTag) throws TemplatingException {
 		// remove spacing
 		headTag = headTag.trim();
 		
@@ -124,7 +127,7 @@ public class TemplatingHelper {
 		return solveOperators(context, headTag);
 	}
 	
-	private static boolean solveOperators(HashMap<String, Object> context, String headTag) throws TemplatingException {
+	private static boolean solveOperators(Map<String, Object> context, String headTag) throws TemplatingException {
 		if (headTag.contains("==")) {
 	        String[] parts = partsToContext(context, headTag.split("=="));
 	        return parts[0].toString().trim().equals(parts[1].toString().trim()); // without spacing
@@ -165,7 +168,7 @@ public class TemplatingHelper {
 	/**
 	 * parse condition parts to context if needed
 	 * */
-	private static String[] partsToContext(HashMap<String, Object> context, String[] parts) throws TemplatingException {
+	private static String[] partsToContext(Map<String, Object> context, String[] parts) throws TemplatingException {
 		for (int i = 0; i < parts.length; i++) {
 			
 			if (parts[i] == null) continue;

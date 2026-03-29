@@ -20,14 +20,13 @@ public class SimpleTemplating {
 	private WebServer ws;
 	private SessionHelper sessionHelper;
 	
-	private HashMap<String, Object> context;
+	private final Map<String, Object> context;
 
 	public SimpleTemplating(WebServer ws, SessionHelper sessionHelper) throws TemplatingException {
 		this.ws = ws;
 		this.sessionHelper = sessionHelper;
 		this.context = new HashMap<String, Object>();
 		//todo:: feat: recursive iteration
-		//todo:: perf: template caching for better performance
 	}
 	
 	public void addDefaults(IHTTPSession session) throws Exception {
@@ -78,7 +77,7 @@ public class SimpleTemplating {
 	 * @throws TemplatingException, IOException
 	 * */
 	public String render(Path templatePath) throws IOException, TemplatingException {
-		String content = Files.readString(templatePath);
+		String content = loadFromCache(templatePath);
 		
 		content = renderVariables(context, content);
 		content = renderIteratorTags(context, content);
@@ -90,13 +89,30 @@ public class SimpleTemplating {
 		 return content;
 	}
 	
+	/**
+	 * returns raw template content from cache while reloading outdated files.
+	 * */
+	private String loadFromCache(Path templatePath) throws IOException, TemplatingException {
+		String cacheKey = templatePath.toAbsolutePath().normalize().toString();
+		CachedTemplate cached = 
+				TemplatingHelper.CACHE.get(cacheKey);
+		long lastModified = Files.getLastModifiedTime(templatePath).toMillis();
+
+		if (cached == null || cached.getLastModified() != lastModified) {
+			ws.log("cache updated for: " + templatePath);
+			cached = new CachedTemplate(templatePath, Files.readString(templatePath));
+		    TemplatingHelper.CACHE.put(cacheKey, cached);
+		}
+		
+		return cached.getRawContent();
+	}
 	
 	/**
 	 * render condition tags
 	 * @param itemScope 
 	 * @throws TemplatingException 
 	 * */
-	private String renderConditionTags(HashMap<String, Object> itemScope, String content) throws TemplatingException {
+	private String renderConditionTags(Map<String, Object> itemScope, String content) throws TemplatingException {
 		String startTag = "{% if ";
 		String endTag = "{% /if %}";
 		String elseTag = "{% else %}";
@@ -147,7 +163,7 @@ public class SimpleTemplating {
 	 * @param itemScope 
 	 * @throws TemplatingException 
 	 * */
-	private String renderIteratorTags(HashMap<String, Object> scope, String content) throws TemplatingException {
+	private String renderIteratorTags(Map<String, Object> scope, String content) throws TemplatingException {
 		String startTag = "{% iterate ";
 		String endTag = "{% /iterate %}";
 		
@@ -214,7 +230,7 @@ public class SimpleTemplating {
 		return content;
 	}
 	
-	private String renderVariables(HashMap<String, Object> scope, String content) throws TemplatingException {
+	private String renderVariables(Map<String, Object> scope, String content) throws TemplatingException {
 		int cursor = 0;
 		while (containsVariable(content)) {
 			int startIndex = content.indexOf("{{", cursor); // {{
