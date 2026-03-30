@@ -215,6 +215,7 @@ public class WebServer extends Service {
         		response.put("error", "authentication error");
         	} else {
         		response.put("error", e.getMessage());
+        		e.printStackTrace();
         	}
         	
         	log("[RESPONSE ERROR] " + session.getRemoteIpAddress() + " - " + response.toString() +  ":" + e.getMessage());
@@ -307,6 +308,7 @@ public class WebServer extends Service {
         	return r;
         } catch (IOException | TemplatingException e) {
         	log("[TEMPLATE ERROR] " + name +  ":" + e.getMessage());
+        	e.printStackTrace();
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "Error reading template: " + name);
         }
     }

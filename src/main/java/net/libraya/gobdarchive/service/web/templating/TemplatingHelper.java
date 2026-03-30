@@ -1,6 +1,9 @@
 package net.libraya.gobdarchive.service.web.templating;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -14,13 +17,13 @@ public class TemplatingHelper {
 	 * return object itself if no method chaining, otherwise return last function output.
 	 * @throws TemplatingException 
 	 * */
-	public static Object resolveObjectPath(Object obj, String potentialPath) throws TemplatingException {
+	public static Object resolveObjectPath(Map<String, Object> context , Object obj, String potentialPath) throws TemplatingException {
 		if (obj == null || potentialPath == null || potentialPath.isEmpty()) return obj;
 	    
 	    // split path
-	    String[] parts = potentialPath.split("\\.");
+	    String[] parts = splitObjectPath(potentialPath);
 	    Object current = obj;
-
+	    
 	    for (String part : parts) {
 	        if (current == null) return null;
 	        
@@ -29,7 +32,7 @@ public class TemplatingHelper {
 	        String methodName = (bracketIndex != -1) ? part.substring(0, bracketIndex).trim() : part.trim();
 	        if (methodName.isEmpty()) continue;
 	        
-	        Object[] args = extractArgs(part);
+	        Object[] args = extractArgs(context, part);
 	        try {
 	        	 Method targetMethod = null;
 	            
@@ -41,27 +44,49 @@ public class TemplatingHelper {
 	                }
 	            }
 	            
-	            // fallback to getter
 	            if (targetMethod == null) {
-	                String getterName = "get" + methodName.substring(0, 1).toUpperCase() + methodName.substring(1);
-	                targetMethod = current.getClass().getMethod(getterName);
-	                args = new Object[0];
+	                throw new TemplatingException("No method '" + methodName + "' with " + args.length + " args in " + current.getClass().getSimpleName());
 	            }
-
+	                
 	            current = targetMethod.invoke(current, args);
 	        } catch (Exception e) {
-	        	 throw new TemplatingException("[TEMPLATING ERROR] Couldn't resolve '" + methodName + "' in " + current.getClass().getSimpleName());
+	        	 throw new TemplatingException("Couldn't resolve '" + methodName + "' in " + current.getClass().getSimpleName());
 	        }
 	    }
 	    return current;
 	}
 	
-	public static Object[] extractArgs(String method) {
+	/**
+	 * divides chained methods by '.' while ignoring method parameters.
+	 * */
+	private static String[] splitObjectPath(String path) {
+	    List<String> parts = new ArrayList<>();
+	    String current = "";
+	    int depth = 0;
+
+	    for (char c : path.toCharArray()) {
+	        if (c == '(') depth++;
+	        if (c == ')') depth--;
+
+	        if (c == '.' && depth == 0) {
+	            parts.add(current);
+	            current = "";
+	        } else {
+	            current += c;
+	        }
+	    }
+
+	    parts.add(current);
+	    return parts.toArray(new String[] {});
+	}
+
+	
+	public static Object[] extractArgs(Map<String, Object> context, String method) {
 		int bracketOpen = method.indexOf("(");
 		int bracketClose = method.lastIndexOf(")");
 		
 		// return no args if no brackets found.
-		if (bracketOpen == -1) {
+		if (bracketOpen == -1 || bracketClose == -1 || bracketClose < bracketOpen) {
 			return new Object[] {};
 		}
 			
@@ -72,10 +97,20 @@ public class TemplatingHelper {
 			return new Object[] {};
 		}
 		
-		Object[] args = argsRaw.split(",");
+		String[] raw = argsRaw.split(",");
+	    Object[] args = new Object[raw.length];
 	    for (int i = 0; i < args.length; i++) {
+	    	String cleaned = raw[i].trim().replace("'", "").replace("\"", "");
+	    	
+	    	// context lookup
+	    	if (context.containsKey(cleaned)) {
+	            args[i] = context.get(cleaned);
+	            continue;
+	    	}
+	    	
 	    	// cast to correct datatype
-	    	args[i] = cast(args[i].toString().trim().replace("'", "").replace("\"", ""));
+	        args[i] = cast(context, cleaned);
+
 	    	
 	    }
 		
@@ -85,14 +120,37 @@ public class TemplatingHelper {
 	public static Object getValue(Map<String, Object> context, String fullKey) throws TemplatingException {
 	    if (fullKey == null || fullKey.isEmpty()) return null;
 	    
-	    // if method chaining
-	    if (fullKey.contains(".")|| fullKey.contains("(")) {
-	        int dotIndex = fullKey.indexOf(".");
-	        String rootKey = fullKey.substring(0, dotIndex);
-	        String path = fullKey.substring(dotIndex + 1);
+	    int firstBracket = fullKey.indexOf("(");
+	    int lastBracket = fullKey.lastIndexOf(")");
+	    int firstDot = fullKey.indexOf(".");
+
+	    boolean isRootMethodCall = (firstBracket != -1 && lastBracket != -1 && (firstDot == -1 || firstBracket < firstDot));
+	    
+	    if (isRootMethodCall) {
+	        String methodName = fullKey.substring(0, firstBracket);
+	        Object contextObj = context.get(methodName);
 	        
+	        // methods from context
+	        if (contextObj instanceof TemplateMethod) {
+	        	TemplateMethod m = (TemplateMethod) contextObj;
+
+		        Object[] args = extractArgs(context, fullKey);
+		        
+		        try {
+					return m.method.invoke(m.owner, args);
+				} catch (IllegalAccessException | InvocationTargetException e) {
+					throw new TemplatingException("Unable to invoke method: " + m.owner.getClass().getSimpleName() + "." + m.method + " (" + args.length + " args)");
+				}
+	        }
+	    }
+	    
+	    // if method chaining
+	    if (firstDot != -1) {
+	    	String rootKey = fullKey.substring(0, firstDot);
+	        String path = fullKey.substring(firstDot + 1);
 	        Object rootObj = context.get(rootKey);
-	        return resolveObjectPath(rootObj, path);
+	        
+	        return resolveObjectPath(context, rootObj, path);
 	    }
 	    
 	    // return context
@@ -189,39 +247,56 @@ public class TemplatingHelper {
 		return parts;
 	}
 	
-	private static Object cast(Object ref) {
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private static Object cast(Map<String, Object> context, Object ref) {
 		String s = ref.toString();
+		
+		// number
 		if (isNumeric(ref)) {
 	        return s.contains(".") ? Float.parseFloat(s) : Integer.parseInt(s);
 	    }
+		
+		// enum
+		if (s.contains(".")) {
+		    String[] parts = s.split("\\.");
+		    if (parts.length == 2) {
+		        String enumType = parts[0];
+		        String enumKey = parts[1];
+
+		        // check if type is in context
+		        Object typeObj = context.get(enumType);
+		        if (typeObj instanceof Class<?> clazz && clazz.isEnum()) {
+		            return Enum.valueOf((Class<Enum>) clazz, enumKey);
+		        }
+
+		    }
+		}
+		
+		// boolean
 	    if (s.equalsIgnoreCase("true") || s.equalsIgnoreCase("false")) {
 	        return Boolean.parseBoolean(s);
 	    }
+	    
+	    // just as passed (typically as string)
 	    return ref;
 	}
 	
 	private static boolean isNumeric(Object ref) {
-		if (ref == null) return false;
-		
-		String s = ref.toString().trim();
-		int startIndex = s.startsWith("-") ? 1 : 0;
-		
-		if (s.length() == startIndex) return false;
-		
-		for (int i = startIndex; i < s.length(); i++) {
-	         if (!Character.isDigit(s.charAt(i))) {
-	            return false;
-	        }
-	    }
-	    return true;
+		try {
+			Float.parseFloat(ref.toString());
+			return true;
+		} catch (Exception e){
+			return false;
+		}
 	}
 	
 	private static boolean containsComparison(String headTag) {
-		return headTag.contains("==") ||
-				headTag.contains("!=") ||
-				headTag.contains(">") ||
-				headTag.contains("<") ||
-				headTag.contains(">=") ||
-				headTag.contains("<=");
+		return headTag.contains(">=") ||
+			       headTag.contains("<=") ||
+			       headTag.contains("==") ||
+			       headTag.contains("!=") ||
+			       headTag.contains(">")  ||
+			       headTag.contains("<");
+
 	}
 }

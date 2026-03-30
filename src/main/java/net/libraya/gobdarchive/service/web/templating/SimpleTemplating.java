@@ -20,7 +20,7 @@ public class SimpleTemplating {
 	private WebServer ws;
 	private SessionHelper sessionHelper;
 	
-	private final Map<String, Object> context;
+	private final HashMap<String, Object> context;
 
 	public SimpleTemplating(WebServer ws, SessionHelper sessionHelper) throws TemplatingException {
 		this.ws = ws;
@@ -35,7 +35,7 @@ public class SimpleTemplating {
 		addVariable("loggedIn", sessionHelper.isLoggedIn());
 		addVariable("uid", sessionHelper.getSessionData().optString("uid", null));
 		addVariable("WebPermission", WebPermission.class);
-		addMethod("isAuthorized", ws.getPermissionLoader().getClass().getMethod("isAuthorized", String.class, WebPermission.class));
+		addMethod("isAuthorized", ws.getPermissionLoader(), "isAuthorized", String.class, WebPermission.class);
 		
 		// partials
 		addPartial(ws, "headsection", "presets/headsection.html");
@@ -44,8 +44,17 @@ public class SimpleTemplating {
 		addPartial(ws, "messagescript", "presets/messages.html");
 	}
 	
-	public void addMethod(String syntax, Method method) {
-		addVariable(syntax, method);
+	/**
+	 * add methods based on an object.
+	 * */
+	public void addMethod(String syntax, Object owner, String methodName, Class<?>... parameters) throws TemplatingException {
+		try {
+			Method method = owner.getClass().getMethod(methodName, parameters);
+			
+			addVariable(syntax, new TemplateMethod(owner, method));
+		} catch (Exception e) {
+			throw new TemplatingException("No such method: " + owner.getClass().getSimpleName() + "." + methodName + " (" + parameters.length + " args)");
+		}
 	}
 	
 	/**
@@ -99,7 +108,6 @@ public class SimpleTemplating {
 		long lastModified = Files.getLastModifiedTime(templatePath).toMillis();
 
 		if (cached == null || cached.getLastModified() != lastModified) {
-			ws.log("cache updated for: " + templatePath);
 			cached = new CachedTemplate(templatePath, Files.readString(templatePath));
 		    TemplatingHelper.CACHE.put(cacheKey, cached);
 		}

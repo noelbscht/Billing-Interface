@@ -67,13 +67,13 @@ oder bei dictionaries:
 
 ### Methoden
 
-Methoden können im Backend registriert werden:
+Methoden können im Backend registriert werden. 
+Dazu wird der `Syntax` angegeben, das `Besitzer-Objekt`, der tatsächliche `Methodenname`, sowie die erwarteten `Parametertypen`.
+
+Bsp.:
 
 ```
-addMethod("isAuthorized",
-	ws.getPermissionLoader().getClass().getMethod(
-		"isAuthorized", String.class, WebPermission.class
-    )
+addMethod("isAuthorized", ws.getPermissionLoader(), "isAuthorized", String.class, WebPermission.class);
 );
 ```
 im Template:
