@@ -9,14 +9,24 @@ import net.libraya.gobdarchive.cli.CLI;
 import net.libraya.gobdarchive.cli.Command;
 import net.libraya.gobdarchive.service.ServiceHandler;
 import net.libraya.gobdarchive.utils.Unicodes;
+import net.libraya.gobdarchive.utils.config.Configurations;
+import net.libraya.gobdarchive.utils.exception.ConfigurationException;
 
 public class Main {
 	
 	private static final CLI commandInterface = new CLI();
 	private static final ArchiveManager archiveManager = new ArchiveManager();
 	private static final ServiceHandler serviceHandler = new ServiceHandler();
+	private static Configurations configurations;
 	
 	public static void main(String[] args) {
+		try {
+			configurations = new Configurations();
+		} catch (ConfigurationException e) {
+			System.err.println(e.getMessage());
+			return;
+		}
+		
 		// interrupt if not compatible, bypass option for testing purposes.
 		if (!isOSCompatible()) {
 			if (args.length != 0 && !args[args.length -1].equals("--bypass")) { // else skip (bypass compatibility check)
@@ -109,5 +119,9 @@ public class Main {
 	
 	public static ServiceHandler getServicehandler() {
 		return serviceHandler;
+	}
+	
+	public static Configurations getConfigurations() {
+		return configurations;
 	}
 }

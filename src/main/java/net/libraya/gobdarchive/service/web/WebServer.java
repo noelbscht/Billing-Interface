@@ -46,12 +46,6 @@ public class WebServer extends Service {
     public WebServer() {
     	super("WebInterface", Environment.WP_ENABLED, Environment.WP_PORT);
     	
-    	try {
-			this.permissionLoader = new WebPermissionLoader();
-		} catch (IOException e) {
-			log("Failed to load permission configuration.");
-		}
-    	
         this.webRoot = Path.of(System.getProperty("user.dir"), "web");
         this.staticDir = webRoot.resolve("static");
         this.templatesDir = webRoot.resolve("templates");
@@ -71,7 +65,6 @@ public class WebServer extends Service {
      * */
     public void loadWebroot() throws IOException {
     	if (!Files.exists(this.webRoot) || this.webRoot.toFile().listFiles(File::isDirectory).length == 0) {
-    		log("awfawf aww wa f");
     		Files.createDirectories(this.webRoot);
     		
     		try {
@@ -215,7 +208,6 @@ public class WebServer extends Service {
         		response.put("error", "authentication error");
         	} else {
         		response.put("error", e.getMessage());
-        		e.printStackTrace();
         	}
         	
         	log("[RESPONSE ERROR] " + session.getRemoteIpAddress() + " - " + response.toString() +  ":" + e.getMessage());
@@ -308,7 +300,6 @@ public class WebServer extends Service {
         	return r;
         } catch (IOException | TemplatingException e) {
         	log("[TEMPLATE ERROR] " + name +  ":" + e.getMessage());
-        	e.printStackTrace();
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/plain", "Error reading template: " + name);
         }
     }
