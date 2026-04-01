@@ -46,6 +46,7 @@ public class WebServer extends Service {
     public WebServer() {
     	super("WebInterface", Environment.WP_ENABLED, Environment.WP_PORT);
     	
+    	this.permissionLoader = new WebPermissionLoader();
         this.webRoot = Path.of(System.getProperty("user.dir"), "web");
         this.staticDir = webRoot.resolve("static");
         this.templatesDir = webRoot.resolve("templates");
