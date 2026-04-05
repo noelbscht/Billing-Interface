@@ -100,7 +100,14 @@ public class TemplatingHelper {
 		String[] raw = argsRaw.split(",");
 	    Object[] args = new Object[raw.length];
 	    for (int i = 0; i < args.length; i++) {
-	    	String cleaned = raw[i].trim().replace("'", "").replace("\"", "");
+	    	String cleaned = raw[i].trim();
+	    	boolean isQuoted = (cleaned.startsWith("\"") && cleaned.endsWith("\""))
+	    	                || (cleaned.startsWith("'") && cleaned.endsWith("'"));
+
+	    	if (isQuoted) {
+	    	    args[i] = cleaned.substring(1, cleaned.length() - 1); 
+	    	    continue;
+	    	}
 	    	
 	    	// context lookup
 	    	if (context.containsKey(cleaned)) {
