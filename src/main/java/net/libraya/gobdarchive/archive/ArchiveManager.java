@@ -197,6 +197,46 @@ public class ArchiveManager {
 	}
 	
 	/**
+	 * provides entry content paths including the file itself and its metadata file.
+	 * 
+	 * */
+	public Path[] getEntryDataset(String archiveId, String actorUId, LogDetails details) throws Exception {
+	    archiveId = formatArchiveId(archiveId);
+
+	    Path folder = findArchiveFolder(archiveId);
+	    if (folder == null) {
+	        throw new Exception("Archive entry not found: " + archiveId);
+	    }
+
+	    Path metadataFile = folder.resolve("metadata.json");
+	    if (!Files.exists(metadataFile)) {
+	        throw new MetadataException("Missing metadata.json for: " + archiveId);
+	    }
+
+	    JSONObject meta = new JSONObject(Files.readString(metadataFile));
+	    String originalFileName = meta.getString("original_file_name");
+	    
+	    Path archivedFile = folder.resolve(originalFileName);
+	    if (!Files.exists(archivedFile)) {
+	        throw new Exception("Archived file missing: " + archivedFile);
+	    }
+	    
+	    // log entry
+	    writeLogEntry(
+    	    LogAction.VIEW_FILE,
+    	    getISOTimestamp(),
+    	    archiveId,
+    	    actorUId,
+    	    meta.getString("hash"),
+    	    LogActionStatus.SUCCESS,
+    	    details
+    	);
+
+
+	    return new Path[] {archivedFile, metadataFile};
+	}
+	
+	/**
 	 * returns a list of metadata, depending on chosen filtering options.
 	 * */
 	public List<JSONObject> query(QueryFilterOptions filter) throws Exception {
