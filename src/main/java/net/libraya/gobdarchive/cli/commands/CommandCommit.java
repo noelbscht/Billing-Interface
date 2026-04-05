@@ -1,6 +1,7 @@
 package net.libraya.gobdarchive.cli.commands;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
@@ -79,13 +80,14 @@ public class CommandCommit extends Command {
                 );
             }
             
+            String fileName = Path.of(filePath).getFileName().toString();
             Metadata metadata = new Metadata(
                     type,
                     CommitType.CLI,
                     Paths.get(filePath),
-                    customMetadata);
+                    customMetadata, fileName);
             
-            Main.getArchiveManager().commit(metadata, -1, new LogDetails(Map.of()));
+            Main.getArchiveManager().commit(metadata, null, new LogDetails(Map.of()));
             System.out.println("Successfully committed.");
             return true;
         } catch (Exception e) {

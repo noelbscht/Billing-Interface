@@ -14,8 +14,8 @@ import java.util.List;
 
 import org.json.JSONObject;
 
-import net.libraya.gobdarchive.archive.option.LogDetails;
 import net.libraya.gobdarchive.archive.option.ExportOptions;
+import net.libraya.gobdarchive.archive.option.LogDetails;
 import net.libraya.gobdarchive.archive.option.QueryFilterOptions;
 import net.libraya.gobdarchive.utils.Environment;
 import net.libraya.gobdarchive.utils.HashUtil;
@@ -23,12 +23,15 @@ import net.libraya.gobdarchive.utils.ZipUtil;
 import net.libraya.gobdarchive.utils.exception.MetadataException;
 
 public class ArchiveManager {
-
+	
 	public ArchiveManager() {
-
+		
 	}
 	
-	public void commit(Metadata metadata, int actorId, LogDetails details) throws Exception {
+	/**
+	 * adds an entry to the archive including metadata.
+	 * */
+	public void commit(Metadata metadata, String actorUId, LogDetails details) throws Exception {
 		// set final timestamp
 	    metadata.timestamp = getISOTimestamp();
 		
@@ -41,11 +44,11 @@ public class ArchiveManager {
 		JSONObject requirements = metadata.getFinalMetadata();
 		
 	    // archive path
-	    Path targetDir = getArchivePath(metadata.archiveId, metadata.type);
+	    Path targetDir = generateArchivePath(metadata.archiveId, metadata.type, metadata.timestamp);
 	    Files.createDirectories(targetDir);
 
 	    // copy file
-	    Path targetFile = targetDir.resolve(metadata.path.getFileName());
+	    Path targetFile = targetDir.resolve(metadata.filename);
 	    Files.copy(metadata.path, targetFile);
 	    
 	    // write metadata.json
@@ -56,43 +59,33 @@ public class ArchiveManager {
 
 	    // write log
 	    if (details.getDetails().containsKey(LogDetails.RELATION_KEY)) {
-	    	writeLogEntry(LogAction.COMMIT_UPDATE, metadata.timestamp, actorId, metadata.hash, LogActionStatus.SUCCESS, details);
+	    	writeLogEntry(LogAction.COMMIT_UPDATE, metadata.timestamp, metadata.archiveId, actorUId, metadata.hash, LogActionStatus.SUCCESS, details);
 	    } else {
-	    	writeLogEntry(LogAction.COMMIT_CREATE, metadata.timestamp, actorId, metadata.hash, LogActionStatus.SUCCESS, details);
+	    	writeLogEntry(LogAction.COMMIT_CREATE, metadata.timestamp, metadata.archiveId, actorUId, metadata.hash, LogActionStatus.SUCCESS, details);
 	    }
 
 	    // set immutable
 	    makeImmutable(targetDir);
-	    
-	    // delete temp file
-	    if (metadata.path.toString().contains("api_upload_")) {
-	        Files.deleteIfExists(metadata.path);
-	    }
+	    makeImmutable(targetFile);
+	    makeImmutable(targetDir.resolve("metadata.json"));
+	    makeImmutable(targetDir.resolve("hash.txt"));
 	}
 
+	/**
+	 * returns current ISO timestamp.
+	 * */
 	private String getISOTimestamp() {
 		return LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME);
 	}
-
-	public VerificationResult verify(String archiveId, int actorId, LogDetails details) throws Exception {
+	
+	/**
+	 * returns VerificationResult class, which provides possible errors during this function to test if the verification / validation succeed.
+	 * */
+	public VerificationResult verify(String archiveId, String actorUId, LogDetails details) throws Exception {
 	    VerificationResult result = new VerificationResult();
 	    
-	    // sender provided a path like 2026/02/000003-invoice
-        if (archiveId.contains("/")) {
-            String[] parts = archiveId.split("/");
-            archiveId = parts[parts.length - 1];
-        }
-
-        // sender provided full folder name like 000003-invoice
-        if (archiveId.matches("\\d{6}-[a-z]+")) {
-        	archiveId = archiveId.split("-")[0];
-        }
-
-        // sender provided only a number like 3 or 000003
-        if (archiveId.matches("\\d+")) {
-        	archiveId = String.format("%06d", Integer.parseInt(archiveId));
-        }
-
+	   archiveId = formatArchiveId(archiveId);
+	   
 	    Path archiveFolder = findArchiveFolder(archiveId);
 	    if (archiveFolder == null) {
 	        result.addError("Archive entry not found: " + archiveId);
@@ -108,8 +101,8 @@ public class ArchiveManager {
 
 	    JSONObject metadata = new JSONObject(Files.readString(metadataFile));
 	    String storedHash = metadata.getString("hash");
-	    String originalFileName = metadata.getString("originalFile");
-	    String archiveIdFromMeta = metadata.getString("archiveId");
+	    String originalFileName = metadata.getString("original_file_name");
+	    String archiveIdFromMeta = metadata.getString("archive_id");
 
 
 	    // hash.txt
@@ -141,10 +134,10 @@ public class ArchiveManager {
         // logfile: check entry for this archiveId
         boolean logEntryFound = false;
         for (String line : Files.readAllLines(Environment.LOG_FILE)) {
-            if (line.contains(" | " + archiveIdFromMeta + " | ")) {
+        	if (line.contains("| archiveId=" + archiveIdFromMeta + " |")) {
                 logEntryFound = true;
 
-                if (!line.contains("sha256=" + recalculatedHash)) {
+                if (!line.contains("| sha256=" + recalculatedHash + " |")) {
                     result.addError("Log entry hash mismatch");
                 }
                 break;
@@ -179,12 +172,17 @@ public class ArchiveManager {
         // write log entry
         LogActionStatus status = result.isSuccess() ? LogActionStatus.SUCCESS : LogActionStatus.FAILURE;
         
-        writeLogEntry(LogAction.VERIFY, getISOTimestamp(), actorId, recalculatedHash, status, details);
+        writeLogEntry(LogAction.VERIFY, getISOTimestamp(), archiveId, actorUId, recalculatedHash, status, details);
         
         return result;
     }
 	
+	/**
+	 * returns metadata based on archiveId.
+	 * */
 	public JSONObject show(String archiveId) throws Exception {
+		archiveId = formatArchiveId(archiveId);
+		
 	    Path folder = findArchiveFolder(archiveId);
 	    if (folder == null) {
 	        throw new Exception("Archive entry not found: " + archiveId);
@@ -222,7 +220,7 @@ public class ArchiveManager {
 				continue;
 			
 			if (filter.type != null) {
-	            String type = meta.getString("type");
+	            String type = meta.getString("entry_type");
 	            if (!type.equalsIgnoreCase(filter.type.name())) 
 	            	continue;
 	        }
@@ -254,7 +252,9 @@ public class ArchiveManager {
 	}
 	
 	
-	public Path exportSingle(String archiveId, int actorId, LogDetails details, ExportOptions options) throws Exception {
+	public Path exportSingle(String archiveId, String actorUId, LogDetails details, ExportOptions options) throws Exception {
+		archiveId = formatArchiveId(archiveId);
+		
 	    JSONObject meta = show(archiveId);
 	    Path folder = findArchiveFolder(archiveId);
 
@@ -263,7 +263,7 @@ public class ArchiveManager {
 	    }
 
 	    Path tempDir = Files.createTempDirectory("export_single_");
-	    Files.copy(folder.resolve(meta.getString("originalFile")), tempDir.resolve(meta.getString("originalFile")));
+	    Files.copy(folder.resolve(meta.getString("original_file_name")), tempDir.resolve(meta.getString("original_file_name")));
 	    Files.writeString(tempDir.resolve("metadata.json"), meta.toString(2));
 
 	    if (options.includeAuditLog) {
@@ -275,24 +275,27 @@ public class ArchiveManager {
 	    
 	    // log export
 	    String hash = HashUtil.sha256(zip); // Hash des fertigen Export-Pakets
-	    details.put(LogDetails.ARCHIVE_ID, archiveId);
 	    details.put(LogDetails.EXPORT_OPTIONS, options.toString());
-	    writeLogEntry(LogAction.EXPORT_SINGLE, getISOTimestamp(), actorId, hash, LogActionStatus.SUCCESS, details);
+	    
+	    writeLogEntry(LogAction.EXPORT_SINGLE, getISOTimestamp(), archiveId, actorUId, hash, LogActionStatus.SUCCESS, details);
 	    
 	    return zip;
 	}
 	
-	public Path exportFiltered(QueryFilterOptions filter, ExportOptions options) throws Exception {
+	/**
+	 * an empty export initiates a full data export.
+	 * */
+	public Path exportFiltered(QueryFilterOptions filter, ExportOptions options, String actorUId, LogDetails details) throws Exception {
 	    List<JSONObject> entries = query(filter);
 
 	    Path tempDir = Files.createTempDirectory("export_filtered_");
 
 	    for (JSONObject meta : entries) {
-	        String archiveId = meta.getString("archiveId");
+	        String archiveId = meta.getString("archive_id");
 	        Path folder = findArchiveFolder(archiveId);
 
-	        Files.copy(folder.resolve(meta.getString("originalFile")),
-	                   tempDir.resolve(meta.getString("originalFile")));
+	        Files.copy(folder.resolve(meta.getString("original_file_name")),
+	                   tempDir.resolve(meta.getString("original_file_name")));
 
 	        Files.writeString(tempDir.resolve(archiveId + "_metadata.json"), meta.toString(2));
 	    }
@@ -303,13 +306,21 @@ public class ArchiveManager {
 
 	    Path zip = tempDir.resolve("export.zip");
 	    ZipUtil.zipFolder(tempDir, zip);
-
+	    
+	    String hash = HashUtil.sha256(zip);
+	    LogAction logAction = filter == null ? LogAction.EXPORT_ALL : LogAction.EXPORT_FILTERED;
+	    writeLogEntry(logAction, getISOTimestamp(), "-", actorUId, hash, LogActionStatus.SUCCESS, details);
+	    
 	    return zip;
 	}
 	
-	public Path exportAll(ExportOptions options) throws Exception {
-		QueryFilterOptions filter = new QueryFilterOptions(); // no filters set
-	    return exportFiltered(filter, options);
+	/**
+	 * uses a filtered export with empty filtering option for a full data return.
+	 * */
+	public Path exportAll(ExportOptions options, String actorUID, LogDetails details) throws Exception {
+		QueryFilterOptions filter = new QueryFilterOptions(null); // no filters set
+		
+	    return exportFiltered(filter, options, actorUID, details);
 	}
 
 	
@@ -318,6 +329,9 @@ public class ArchiveManager {
 	}
 
 	
+	/**
+	 * returns a listing of all entry-paths.
+	 * */
 	public ArrayList<String> listArchiveEntries(EntryType filterType) throws IOException {
 	    ArrayList<String> entries = new ArrayList<>();
 
@@ -421,7 +435,29 @@ public class ArchiveManager {
 
         return null;
     }
+	
+	/**
+	 * returns a formatted version of the provided archiveId.
+	 * */
+	private String formatArchiveId(String archiveId) {
+		 // sender provided a path like 2026/02/000003-invoice
+        if (archiveId.contains("/")) {
+            String[] parts = archiveId.split("/");
+            archiveId = parts[parts.length - 1];
+        }
 
+        // sender provided full folder name like 000003-invoice
+        if (archiveId.matches("\\d{6}-[a-z]+")) {
+        	archiveId = archiveId.split("-")[0];
+        }
+
+        // sender provided only a number like 3 or 000003
+        if (archiveId.matches("\\d+")) {
+        	archiveId = String.format("%06d", Integer.parseInt(archiveId));
+        }
+        
+        return archiveId;
+	}
 
 	protected static String generateNextArchiveId() throws IOException {
         LocalDate now = LocalDate.now();
@@ -448,11 +484,14 @@ public class ArchiveManager {
     }
 
 	
-	private Path getArchivePath(String archiveId, EntryType type) {
-        LocalDate now = LocalDate.now();
+	/**
+	 * returns a path to store a commit.
+	 * */
+	private Path generateArchivePath(String archiveId, EntryType type, String timestamp) {
+		LocalDateTime ts = LocalDateTime.parse(timestamp);
         return Environment.ARCHIVE_ROOT
-            .resolve(String.valueOf(now.getYear()))
-            .resolve(String.format("%02d", now.getMonthValue()))
+            .resolve(String.valueOf(ts.getYear()))
+            .resolve(String.format("%02d", ts.getMonthValue()))
             .resolve(archiveId + "-" + type.name().toLowerCase());
     }
 
@@ -476,20 +515,23 @@ public class ArchiveManager {
         return HashUtil.sha256(contentWithoutPrev);
     }
     
-    private void writeLogEntry(LogAction action, String timestamp, int actorId, String hash, LogActionStatus status, LogDetails details) throws IOException {
+    /**
+     * appends a log entry to the auditlog file.
+     * */
+    private void writeLogEntry(LogAction action, String timestamp, String archiveId, String actorUId, String hash, LogActionStatus status, LogDetails details) throws IOException {
         String prevHash = getLastLogHash();
         
-        String actor = actorId != -1 ? "userId=" + actorId : "actor=system";
+        String actor = actorUId != null ? "userId=" + actorUId : "actor=system";
         String finalDetails = details != null ? details.getDetailsFormatted() : "/";
         
-        String entry = String.format("%s | action=%s | %s | details=%s | status=%s | sha256=%s | prevHash=%s\n",
-        		timestamp, action, actor, finalDetails, status, hash, prevHash);
+        String entry = String.format("%s | action=%s | archiveId=%s | %s | details=%s | status=%s | sha256=%s | prevHash=%s\n",
+        		timestamp, action, archiveId, actor, finalDetails, status, hash, prevHash);
 
         Files.writeString(
             Environment.LOG_FILE,
             entry,
             StandardOpenOption.CREATE,
-            StandardOpenOption.APPEND
+            StandardOpenOption.APPEND 
         );
     }
     
@@ -499,7 +541,8 @@ public class ArchiveManager {
     	EXPORT_ALL,
     	VERIFY,
     	COMMIT_CREATE,
-    	COMMIT_UPDATE
+    	COMMIT_UPDATE,
+    	VIEW_FILE
     }
     
     protected enum LogActionStatus {

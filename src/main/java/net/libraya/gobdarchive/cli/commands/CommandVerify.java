@@ -39,7 +39,7 @@ public class CommandVerify extends Command {
                     // extract archiveId: 000003
                     String archiveId = folderName.split("-")[0];
 
-                    VerificationResult r = manager.verify(archiveId, -1, new LogDetails(Map.of()));
+                    VerificationResult r = manager.verify(archiveId, null, new LogDetails(Map.of()));
 
                     System.out.println(archiveId + ": " + (r.isSuccess() ? "OK" : "FAILED"));
                 }
@@ -51,7 +51,7 @@ public class CommandVerify extends Command {
         }
 
         try {
-            VerificationResult result = Main.getArchiveManager().verify(input, -1, new LogDetails(Map.of()));
+            VerificationResult result = Main.getArchiveManager().verify(input, null, new LogDetails(Map.of()));
 
             if (result.isSuccess()) {
                 System.out.println("Verification successful for: " + input);

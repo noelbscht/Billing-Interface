@@ -22,6 +22,7 @@ public class Metadata {
 	protected final String archiveId;
 	protected final EntryType type;
 	protected final CommitType origin;
+	protected final String filename;
 	protected final String hash;
 	protected final Path path;
 	protected String timestamp;
@@ -29,12 +30,13 @@ public class Metadata {
 	public Metadata(EntryType type,
 			CommitType origin, 
 			Path path, 
-			JSONObject customMetadata) throws IOException, MetadataException {
+			JSONObject customMetadata, String filename) throws IOException, MetadataException {
 		
 		this.archiveId = ArchiveManager.generateNextArchiveId();
 		
 		this.type = type;
 		this.origin = origin;
+		this.filename = filename;
 		this.path = path;
 		this.customMetadata = customMetadata != null ? customMetadata : new JSONObject();
 		
@@ -44,9 +46,9 @@ public class Metadata {
 	public Metadata(EntryType type,
             CommitType origin,
             File file,
-            JSONObject customMetadata) throws IOException, MetadataException {
+            JSONObject customMetadata, String filename) throws IOException, MetadataException {
 
-		this(type, origin, file.toPath(), customMetadata);
+		this(type, origin, file.toPath(), customMetadata, filename);
 	}
 	
 	/**
@@ -69,12 +71,16 @@ public class Metadata {
 	private JSONObject getNecessaryRequirements() {
 		JSONObject requirements = new JSONObject();
 		
+		String finalFilePath = this.timestamp.substring(0, 7).replace("-", "/") + "/" +
+			    	    this.archiveId + "-" + this.type.name().toLowerCase();
+		
 		requirements.put("archive_id", this.archiveId);
 		requirements.put("entry_type", this.type.name());
-		requirements.put("commitment_type", this.origin.name()); // cli, api, sdk
+		requirements.put("commit_type", this.origin.name()); // cli, api, sdk
 		requirements.put("timestamp", this.timestamp);
 		requirements.put("hash", this.hash);
-		requirements.put("file_path", this.path.toString());
+		requirements.put("file_path", finalFilePath);
+		requirements.put("original_file_name", filename);
 		
 		return requirements;
 	}
