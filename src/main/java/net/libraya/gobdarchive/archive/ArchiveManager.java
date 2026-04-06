@@ -315,7 +315,6 @@ public class ArchiveManager {
 	    
 	    // log export
 	    String hash = HashUtil.sha256(zip); // Hash des fertigen Export-Pakets
-	    details.put(LogDetails.EXPORT_OPTIONS, options.toString());
 	    
 	    writeLogEntry(LogAction.EXPORT_SINGLE, getISOTimestamp(), archiveId, actorUId, hash, LogActionStatus.SUCCESS, details);
 	    
