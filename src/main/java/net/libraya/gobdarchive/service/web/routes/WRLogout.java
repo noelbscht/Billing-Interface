@@ -1,5 +1,7 @@
 package net.libraya.gobdarchive.service.web.routes;
 
+import java.util.HashMap;
+
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
 import net.libraya.gobdarchive.service.web.WebRoute;
@@ -13,7 +15,7 @@ public class WRLogout extends WebRoute {
 	        super(ws, "/logout", new String[] { "GET" } , null);
 	    }
 
-    public Response onRequest(IHTTPSession session, String body, SessionHelper sessionHelper) throws Exception {
+    public Response onRequest(IHTTPSession session, String body, HashMap<String, String> files, SessionHelper sessionHelper) throws Exception {
     	sessionHelper.logout();
     	sessionHelper.addMessage(MessageCategory.INFO, "Du wurdest ausgeloggt.");
 		

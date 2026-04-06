@@ -1,6 +1,7 @@
 package net.libraya.gobdarchive.service.web.routes;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
@@ -13,14 +14,13 @@ import net.libraya.gobdarchive.service.web.auth.WebPermission;
 import net.libraya.gobdarchive.service.web.templating.SimpleTemplating;
 
 public class WRDashboard extends WebRoute {
-
+	
 	public WRDashboard(WebServer ws) {
-	        super(ws, "/dashboard", new String[] { "GET", "POST" } , new WebPermission[] { WebPermission.ARCHIVE_READ });
-	    }
-
+        super(ws, "/dashboard", new String[] { "GET", "POST" } , new WebPermission[] { WebPermission.ARCHIVE_READ });
+    }
 
 	@Override
-    public Response onRequest(IHTTPSession session, String body, SessionHelper sessionHelper) throws Exception {
+    public Response onRequest(IHTTPSession session, String body, HashMap<String, String> files, SessionHelper sessionHelper) throws Exception {
 		SimpleTemplating templating = new SimpleTemplating(ws, sessionHelper);
 		ArchiveManager arch = Main.getArchiveManager();
 		
@@ -32,5 +32,4 @@ public class WRDashboard extends WebRoute {
 		
 		return ws.serveTemplate("dashboard.html", session, templating);
     }
-
 }

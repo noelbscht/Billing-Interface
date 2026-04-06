@@ -25,7 +25,7 @@ public abstract class WebRoute {
         this.permissions = permissions;
     }
 
-    public abstract NanoHTTPD.Response onRequest(IHTTPSession session, String body, SessionHelper sessionHelper) throws Exception;
+    public abstract NanoHTTPD.Response onRequest(IHTTPSession session, String body, HashMap<String, String> files, SessionHelper sessionHelper) throws Exception;
     
     public File[] getFiles(IHTTPSession session) {
         Map<String, String> files = new HashMap<>();

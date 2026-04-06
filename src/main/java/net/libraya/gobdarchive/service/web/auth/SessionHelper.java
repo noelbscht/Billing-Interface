@@ -26,10 +26,13 @@ public class SessionHelper {
 	
 	private IHTTPSession session;
 	private JSONObject currentSessionData = null;
+	private final Map<String, String> parameters;
 	
+	@SuppressWarnings("deprecation")
 	public SessionHelper(WebPermissionLoader permLoader, IHTTPSession session) {
 		this.permLoader = permLoader;
 		this.session = session;
+		this.parameters = session.getParms();
 	}
 	
 	/** write cookie configurations to response and set index path */
@@ -159,5 +162,9 @@ public class SessionHelper {
 		ERROR,
 		SUCCESS
 	}
-
+	
+	
+	public Map<String, String> getParameters() {
+		return parameters;
+	}
 }

@@ -1,5 +1,7 @@
 package net.libraya.gobdarchive.service.web.routes;
 
+import java.util.HashMap;
+
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
 import net.libraya.gobdarchive.service.web.WebRoute;
@@ -15,7 +17,7 @@ public class WRIndex extends WebRoute {
 
 
 	@Override
-    public Response onRequest(IHTTPSession session, String body, SessionHelper sessionHelper) throws Exception {
+    public Response onRequest(IHTTPSession session, String body, HashMap<String, String> files, SessionHelper sessionHelper) throws Exception {
 		SimpleTemplating t = new SimpleTemplating(ws, sessionHelper);
 		
 		return ws.serveTemplate("index.html", session, t);

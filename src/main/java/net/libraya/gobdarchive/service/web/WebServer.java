@@ -17,7 +17,6 @@ import java.time.format.FormatStyle;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 
 import org.json.JSONObject;
 
@@ -137,7 +136,6 @@ public class WebServer extends Service {
     
 	@Override
     public Response serve(IHTTPSession session) {		
-		SessionHelper sessionHelper = new SessionHelper(permissionLoader, session);
         String uri = session.getUri();
         String datetimePrefix = "[" + 
         	    DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
@@ -145,6 +143,7 @@ public class WebServer extends Service {
         	        .format(java.time.LocalDateTime.now()) 
         	    + "] ";
         
+        // log request
         log(datetimePrefix + session.getRemoteIpAddress() + " - " + session.getMethod() + " " + uri);
         
         // serve favicon
@@ -158,25 +157,26 @@ public class WebServer extends Service {
         }
 
         // parse body
-        Map<String, String> files = new HashMap<>();
-        try {
-        	if (session.getMethod() == Method.POST || session.getMethod() == Method.PUT) {
-        		session.parseBody(files);
-        	}
-        } catch (Exception e) {
-            return json(400, new JSONObject().put("error", "Invalid request body"));
-        }
-        String body = files.get("postData");
+        HashMap<String, String> files = new HashMap<String, String>();
+        if (session.getMethod() == Method.POST || session.getMethod() == Method.PUT) {
+    		try {
+    			session.parseBody(files);
+    		} catch (Exception e) {
+                return json(400, new JSONObject().put("error", "Invalid request body"));
+            }
+    	}
+        String body = files.getOrDefault("postData", "");
 
         // route matching
         WebRoute handler = this.router.match(uri);
+        SessionHelper sessionHelper = new SessionHelper(permissionLoader, session);
         Response r;
         try {
         	
         	// not found
         	if (handler == null) {
         		String parameter = "?req=" + URLEncoder.encode(uri, "UTF-8"); 
-        		r = notFound(uri + parameter, session, sessionHelper);
+        		r = notFound(uri + parameter, session, body, files, sessionHelper);
             } else if (!handler.supportsMethod(session.getMethod())) { // unsupported method
         		JSONObject response = new JSONObject();
         		response.put("error", "unsupported method");
@@ -194,10 +194,10 @@ public class WebServer extends Service {
             		r = redirect(targetURL, session);
         		} else { // logged in but still not authorized
         			String parameter = "?req=" + URLEncoder.encode(uri, "UTF-8"); 
-            		r = notAuthorized("/not_authorized" + parameter, session, sessionHelper);
+            		r = notAuthorized("/not_authorized" + parameter, session, body, files, sessionHelper);
         		}
             } else {
-            	r = handler.onRequest(session, body, sessionHelper); // requested route
+            	r = handler.onRequest(session, body, files, sessionHelper); // requested route
             }
         	
         	// serve response
@@ -210,7 +210,6 @@ public class WebServer extends Service {
         	} else {
         		response.put("error", e.getMessage());
         	}
-        	
         	log("[RESPONSE ERROR] " + session.getRemoteIpAddress() + " - " + response.toString() +  ":" + e.getMessage());
         	return json(400, response);
         }
@@ -247,7 +246,7 @@ public class WebServer extends Service {
     	return false;
     }
     
-    protected static Response json(int status, JSONObject obj) {
+    public Response json(int status, JSONObject obj) {
         return newFixedLengthResponse(
             Response.Status.lookup(status),
             "application/json",
@@ -305,16 +304,16 @@ public class WebServer extends Service {
         }
     }
     
-    public Response notFound(String url, IHTTPSession session, SessionHelper sessionHelper) throws Exception {
-        Response resp = router.match("/not_found").onRequest(session, url, sessionHelper);
+    public Response notFound(String url, IHTTPSession session, String body, HashMap<String, String> files, SessionHelper sessionHelper) throws Exception {
+        Response resp = router.match("/not_found").onRequest(session, body, files, sessionHelper);
         
         resp.setStatus(Response.Status.NOT_FOUND);
         
         return resp;
     }
 
-    public Response notAuthorized(String url, IHTTPSession session, SessionHelper sessionHelper) throws Exception {
-    	 Response resp = router.match("/not_authorized").onRequest(session, url, sessionHelper);
+    public Response notAuthorized(String url, IHTTPSession session, String body, HashMap<String, String> files, SessionHelper sessionHelper) throws Exception {
+    	 Response resp = router.match("/not_authorized").onRequest(session, body, files, sessionHelper);
          
          resp.setStatus(Response.Status.UNAUTHORIZED);
          

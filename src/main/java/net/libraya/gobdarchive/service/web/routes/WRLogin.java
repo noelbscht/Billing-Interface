@@ -1,5 +1,8 @@
 package net.libraya.gobdarchive.service.web.routes;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Method;
 import fi.iki.elonen.NanoHTTPD.Response;
@@ -17,11 +20,12 @@ public class WRLogin extends WebRoute {
 
 
 	@Override
-	@SuppressWarnings("deprecation")
-    public Response onRequest(IHTTPSession session, String body, SessionHelper sessionHelper) throws Exception {
+    public Response onRequest(IHTTPSession session, String body, HashMap<String, String> files, SessionHelper sessionHelper) throws Exception {
 		SimpleTemplating t = new SimpleTemplating(ws, sessionHelper);
 		
-		String requestedPath = session.getParms().containsKey("req") ? session.getParms().get("req") : null;
+		Map<String, String> params = sessionHelper.getParameters();
+		
+		String requestedPath = params.containsKey("req") ? params.get("req") : null;
 		
 		if (sessionHelper.isLoggedIn()) {
 			if (requestedPath != null) {
@@ -32,8 +36,8 @@ public class WRLogin extends WebRoute {
 		
 		// login performed
 		if (session.getMethod() == Method.POST) {
-			String email = session.getParms().get("email");
-			String password = session.getParms().get("password");
+			String email = params.get("email");
+			String password = params.get("password");
 			
 			if (email != null && password != null) {
 				// if authentication was successful

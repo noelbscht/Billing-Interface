@@ -1,5 +1,7 @@
 package net.libraya.gobdarchive.service.web.routes;
 
+import java.util.HashMap;
+
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
 import net.libraya.gobdarchive.service.web.WebRoute;
@@ -13,13 +15,11 @@ public class WRNotFound extends WebRoute {
 	        super(ws, "/not_found", new String[] { "GET" } , null);
     }
 
-
-	@SuppressWarnings("deprecation")
 	@Override
-    public Response onRequest(IHTTPSession session, String body, SessionHelper sessionHelper) throws Exception {
+    public Response onRequest(IHTTPSession session, String body, HashMap<String, String> files, SessionHelper sessionHelper) throws Exception {
 		SimpleTemplating t = new SimpleTemplating(ws, sessionHelper);
 		
-		String requestedPath = session.getParms().get("req");
+		String requestedPath = sessionHelper.getParameters().get("req");
 		
 		t.addVariable("path", requestedPath != null ? requestedPath : "...");
 		
