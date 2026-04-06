@@ -310,7 +310,7 @@ public class ArchiveManager {
 	        Files.copy(Environment.LOG_FILE, tempDir.resolve("audit.log"), StandardCopyOption.REPLACE_EXISTING);
 	    }
 
-	    Path zip = tempDir.resolve("export.zip");
+	    Path zip = Files.createTempFile("export_single_", ".zip");
 	    ZipUtil.zipFolder(tempDir, zip);
 	    
 	    // log export
@@ -343,7 +343,7 @@ public class ArchiveManager {
 	        Files.copy(Environment.LOG_FILE, tempDir.resolve("audit.log"), StandardCopyOption.REPLACE_EXISTING);
 	    }
 
-	    Path zip = tempDir.resolve("export.zip");
+	    Path zip = Files.createTempFile("export_single_", ".zip");
 	    ZipUtil.zipFolder(tempDir, zip);
 	    
 	    String hash = HashUtil.sha256(zip);
