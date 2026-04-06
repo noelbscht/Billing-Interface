@@ -45,6 +45,7 @@ public class LogDetails {
 	 * default keys for multiple uses
 	 * */
 	public static final String EXPORT_OPTIONS = "export-options";
+	public static final String FILTER_OPTIONS = "filter-options";
 	public static final String ARCHIVE_ID = "archive-id";
 	public static final String RELATION_KEY = "related-docs";
 	public static final String USER_AGENT = "user-agent";
