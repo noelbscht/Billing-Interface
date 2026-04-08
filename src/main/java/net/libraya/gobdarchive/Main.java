@@ -17,11 +17,11 @@ public class Main {
 	private static final CLI commandInterface = new CLI();
 	private static final ArchiveManager archiveManager = new ArchiveManager();
 	private static final ServiceHandler serviceHandler = new ServiceHandler();
-	private static Configurations configurations;
+	private static Configurations configurations = new Configurations();
 	
 	public static void main(String[] args) {
 		try {
-			configurations = new Configurations();
+			configurations.initialize();
 		} catch (ConfigurationException e) {
 			System.err.println(e.getMessage());
 			return;

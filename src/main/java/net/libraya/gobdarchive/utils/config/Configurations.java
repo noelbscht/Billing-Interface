@@ -1,10 +1,14 @@
 package net.libraya.gobdarchive.utils.config;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.json.JSONObject;
 
+import net.libraya.gobdarchive.Main;
 import net.libraya.gobdarchive.service.web.auth.WebPermission;
 import net.libraya.gobdarchive.utils.FilesUtil;
 import net.libraya.gobdarchive.utils.exception.ConfigurationException;
@@ -14,6 +18,8 @@ import net.libraya.gobdarchive.utils.exception.ConfigurationException;
  * */
 public class Configurations {
 	
+	private List<Configuration> configurations = new ArrayList<Configuration>();
+	
 	// metadata 
 	public final Configuration customMetadataCfg;
 	
@@ -21,17 +27,16 @@ public class Configurations {
 	public final Configuration tableColumnsCfg;
 	public final Configuration permissionsCfg;
 	
-	public Configurations() throws ConfigurationException {
+	public Configurations() {
 		// metadata configurations
-		this.customMetadataCfg =  new Configuration(
+		this.customMetadataCfg = addConfig(new Configuration(
 				Path.of(System.getProperty("user.dir"), "requirements",  "custom-metadata.json")) {
 			
 			@Override
 			public void writePreset() throws IOException {
 				JSONObject obj = new JSONObject();
 	            String[] requirements = new String[] {
-	            		"user_reference_id", // default, example references
-	            		"stripe_bill_url"
+	            		"stripe_bill_url" // default, example references
 	            };
 	            
 	            obj.put("requirements", requirements);
@@ -43,10 +48,10 @@ public class Configurations {
 	            		"by api usage, or by typing them in the web interface."
 	            });
 			}
-		};
+		});
 		
 		// permission loader configurations
-		this.tableColumnsCfg = new Configuration(Path.of(System.getProperty("user.dir"), "web",  "auth-table-columns.json")) {
+		this.tableColumnsCfg = addConfig(new Configuration(Path.of(System.getProperty("user.dir"), "web",  "auth-table-columns.json")) {
 			
 			@Override
 			public void writePreset() throws IOException {
@@ -66,9 +71,9 @@ public class Configurations {
 	            		"Configuration for modifying authentication table column definitions."
 	            });
 			}
-		};
+		});
 		
-		this.permissionsCfg = new Configuration(Path.of(System.getProperty("user.dir"), "web",  "permissions.json")) {
+		this.permissionsCfg = addConfig(new Configuration(Path.of(System.getProperty("user.dir"), "web",  "permissions.json")) {
 			
 			@Override
 			public void writePreset() throws IOException {
@@ -98,6 +103,51 @@ public class Configurations {
 	            		"	1 - administrator permission identifier"
 	            });
 			}
-		};
+		});
+	}
+	
+	/**
+	 * initializes all configuration files by writing their preset data and creating missing directories.
+	 * @throws ConfigurationException 
+	 * */
+	public void initialize() throws ConfigurationException {
+		boolean interrupt = false;
+		List<String> generated = new ArrayList<>();
+		
+		for (int i = 0; i < configurations.size(); i++) {
+			Configuration cfg = configurations.get(i);
+			Path path = cfg.getPath();
+			
+			if (!Files.exists(path)) {
+				generated.add(cfg.getPath().toString());
+				interrupt = true;
+				
+	            try {
+	            	Files.createDirectories(path.getParent());
+	            	cfg.writePreset();
+	    		} catch (IOException e) {
+	    			throw new ConfigurationException("An error occoured during configuration setup: " + e.getMessage());
+	    		}
+	        }
+			cfg.load();
+		}
+		
+		if (interrupt) {
+			Main.sendFeedback(new String[] {
+					"At least one configuration file was created.",
+					"Look them up and restart.",
+					"",
+					"Configurations:",
+					String.join(", ", generated).replaceAll(System.getProperty("user.dir"), "")
+					
+			});
+			System.exit(1);
+		}
+	}
+	
+	private Configuration addConfig(Configuration cfg) {
+		this.configurations.add(cfg);
+		
+		return cfg;
 	}
 }

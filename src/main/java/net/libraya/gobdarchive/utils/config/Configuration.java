@@ -16,21 +16,21 @@ public abstract class Configuration {
 	
 	private JSONObject content;
 	
-	public Configuration(Path path) throws ConfigurationException {
+	public Configuration(Path path) {
 		this.path = path;
-		
-		// create defaults
-		if (!Files.exists(path)) {
-            try {
-            	Files.createDirectories(path.getParent());
-            	writePreset();
-    		} catch (IOException e) {
-    			throw new ConfigurationException("An error occoured during configuration setup: " + e.getMessage());
-    		}
-        }
-		
+	}
+	
+	public void load() throws ConfigurationException {
 		try {
-			this.content = new JSONObject(FilesUtil.readString(this.path));
+			if (Files.exists(path)) {
+				String content = FilesUtil.readString(this.path);
+				
+				if (content.isBlank()) {
+					throw new ConfigurationException("Unable to load empty configuration: " + path.toString());
+				}
+				
+				this.content = new JSONObject(content);
+			}
 		} catch (JSONException | IOException e) {
 			throw new ConfigurationException("Unable to load configuration content: " + path.toString());
 		}
