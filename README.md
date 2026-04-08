@@ -93,7 +93,37 @@ mvn clean package
 cp .env.example .env
 ```
 
-### 3. Programmstart (Webinterface & API)
+### 3. Programmstart & Konfiguration
+
+3.1 - Einmalig zur Erstellung der Konfigurationsdateien starten
+
+```bash
+cd /pfad/zur/jar
+java -jar archive.jar
+```
+
+3.2 - Konfigurationsdateien bei Bedarf anpassen
+
+3.3 - Beispielstruktur der benötigten MySQL- Benutzertabelle:
+
+```ddl
+-- billinginterface.users definition
+CREATE TABLE `users` (
+  `id` int(11) NOT NULL AUTO_INCREMENT, -- erforderlich
+  `email` varchar(255) DEFAULT NULL, -- erforderlich
+  `password` varchar(64) DEFAULT NULL, -- erforderlich
+  `group_id` int(11) NOT NULL, -- erforderlich
+  `name` varchar(32) DEFAULT NULL,
+  `surname` varchar(32) DEFAULT NULL,
+  `company` varchar(32) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+```
+
+> **Info:**
+> Die **erforderlichen** Spalten können bei Bedarf auch anders genannt werden.
+
+### 4. Programmstart (Webinterface & API)
 ```bash
 cd /pfad/zur/jar
 java -jar archive.jar ws full --serve
