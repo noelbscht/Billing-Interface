@@ -99,7 +99,7 @@ public class WebServer extends Service {
             }
 
             try (var stream = Files.walk(source)) {
-                stream.forEach(path -> copyRecursive(source, path, targetDir));
+                stream.forEach(path -> copyPath(source, path, targetDir));
             }
 
         } else { // jar protocol
@@ -112,13 +112,13 @@ public class WebServer extends Service {
                 }
                 
                 try (var stream = Files.walk(source)) {
-                    stream.forEach(path -> copyRecursive(source, path, targetDir));
+                    stream.forEach(path -> copyPath(source, path, targetDir));
                 }
             }
         }
     }
     
-    private void copyRecursive(Path root, Path current, Path targetDir) {
+    private void copyPath(Path root, Path current, Path targetDir) {
         try {
             Path relative = root.relativize(current);
             // JAR-paths: .toString() to correct path
@@ -126,7 +126,8 @@ public class WebServer extends Service {
 
             if (Files.isDirectory(current)) {
                 Files.createDirectories(target);
-            } else if (!Files.exists(target)) {
+            } else {
+            	Files.createDirectories(target.getParent());
                 Files.copy(current, target, StandardCopyOption.REPLACE_EXISTING);
             }
         } catch (IOException e) {
