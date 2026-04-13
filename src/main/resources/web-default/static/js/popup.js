@@ -151,10 +151,16 @@ class PopupExportOptions extends Popup {
 		const elements = [];
 		
 		// include auditlog option
-        const title = Translation.getTranslation("german", "include_audit_log");
-        const sw = DOMPreset.switchOption("include_audit_log", title, false);
+        const titleAuditlog = Translation.getTranslation("german", "include_audit_log");
+        const swAuditlog = DOMPreset.switchOption("include_audit_log", titleAuditlog, false);
 
-        elements.push(sw.wrapper);
+        elements.push(swAuditlog.wrapper);
+		
+		// include nested option
+        const titleNested = Translation.getTranslation("german", "nested");
+        const swNested = DOMPreset.switchOption("nested", titleNested, false);
+
+        elements.push(swNested.wrapper);
 		
 		// submit button
         const submitBtn = DOMPreset.button("Exportieren", "success", () => this.#submit());

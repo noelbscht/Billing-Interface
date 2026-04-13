@@ -73,6 +73,7 @@ window.addEventListener('load', function() {
 		"other": "Sonstieges",  
 		// export options
 		"include_audit_log": "Auditlog beifügen",
+		"nested": "Verschachtelt",
 		"interpret_datev": "DATEV interpretieren"
 	}));
 });

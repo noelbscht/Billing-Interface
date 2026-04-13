@@ -328,16 +328,36 @@ public class ArchiveManager {
 	    List<JSONObject> entries = query(filter);
 
 	    Path tempDir = Files.createTempDirectory("export_filtered_");
-
+	    
 	    for (JSONObject meta : entries) {
 	        String archiveId = meta.getString("archive_id");
+	        String originalFileName = meta.getString("original_file_name");
+	        String exportName = archiveId + "_" + originalFileName;
+
 	        Path folder = findArchiveFolder(archiveId);
 
-	        Files.copy(folder.resolve(meta.getString("original_file_name")),
-	                   tempDir.resolve(meta.getString("original_file_name")));
+	        if (!options.nested) {
+	        	Files.copy(folder.resolve(originalFileName),
+		                   tempDir.resolve(exportName));
+		        Files.writeString(tempDir.resolve(archiveId + "_metadata.json"), meta.toString(2));
+	        } else {
+	            Path nestedDir = tempDir.resolve(archiveId);
+	            Files.createDirectories(nestedDir);
 
-	        Files.writeString(tempDir.resolve(archiveId + "_metadata.json"), meta.toString(2));
+	            Files.copy(
+	                folder.resolve(originalFileName),
+	                nestedDir.resolve(originalFileName),
+	                StandardCopyOption.REPLACE_EXISTING
+	            );
+
+	            Files.writeString(
+	                nestedDir.resolve("metadata.json"),
+	                meta.toString(2)
+	            );
+
+	        }
 	    }
+	    
 
 	    if (options.includeAuditLog) {
 	        Files.copy(Environment.LOG_FILE, tempDir.resolve("audit.log"), StandardCopyOption.REPLACE_EXISTING);
