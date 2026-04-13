@@ -129,6 +129,17 @@ cd /pfad/zur/jar
 java -jar archive.jar ws full --serve
 ```
 
+## Windows und macOS- Testmodus
+> Da Linux-spezifische Funktionen verwendet werden (z.B. die Terminalsteuerung oder die Dateirechte), 
+  lässt sich das Programm nur auf Linux Betriebssystemen ausführen.
+  Der Parameter ``--bypass`` muss an jeden Befehl angehängt werden,
+  um Befehle dennoch ausführen zu können. 
+  
+>  Bsp.:
+
+```bash
+java -jar archive.jar ws full --serve --bypass
+```
 
 ## Optionaler Alias
 
