@@ -138,7 +138,7 @@ public class Configurations {
 					"Look them up and restart.",
 					"",
 					"Configurations:",
-					String.join(", ", generated).replaceAll(System.getProperty("user.dir"), "")
+					String.join(", ", generated).replace(System.getProperty("user.dir"), "")
 					
 			});
 			System.exit(1);
