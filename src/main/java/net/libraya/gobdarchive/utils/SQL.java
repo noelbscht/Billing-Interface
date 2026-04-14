@@ -15,7 +15,7 @@ public class SQL {
 		return "jdbc:mysql://" + host + "/" + database + "?useSSL=true&requireSSL=false&allowPublicKeyRetrieval=true";
 	}
 	
-	private static Connection getConnection() throws SQLException {
+	public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(
     		getURL(Environment.WP_MYSQL_HOST, Environment.WP_MYSQL_DATABASE),
             Environment.WP_MYSQL_USER,
@@ -31,19 +31,23 @@ public class SQL {
 	            stmt.setObject(i + 1, params[i]);
 	        }
 
-	        try (ResultSet rs = stmt.executeQuery()) {
-	            if (rs.next()) {
-	                Map<String, Object> row = new HashMap<>();
-	                ResultSetMetaData metaData = rs.getMetaData();
-	                int columnCount = metaData.getColumnCount();
+	        boolean isSelect = sql.trim().toUpperCase().startsWith("SELECT");
 
-	                for (int i = 1; i <= columnCount; i++) {
-	                    row.put(metaData.getColumnName(i), rs.getObject(i));
+	        if (isSelect) {
+	            try (ResultSet rs = stmt.executeQuery()) {
+	                if (!rs.next()) return null;
+
+	                Map<String, Object> row = new HashMap<>();
+	                ResultSetMetaData meta = rs.getMetaData();
+	                for (int i = 1; i <= meta.getColumnCount(); i++) {
+	                    row.put(meta.getColumnName(i), rs.getObject(i));
 	                }
 	                return row;
 	            }
+	        } else {
+	            stmt.executeUpdate();
+	            return null;
 	        }
-	        return null;
 	    }
 	}
 }

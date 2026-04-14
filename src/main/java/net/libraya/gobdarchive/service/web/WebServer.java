@@ -217,7 +217,7 @@ public class WebServer extends Service {
     }
     
     /**
-     * return if the UID cookie provides all required permissions for a route.
+     * return if the userUId provides all required permissions for a route.
      * */
     public boolean isAuthorized(IHTTPSession session, WebRoute handler, SessionHelper sessionHelper) throws IOException, SQLException {
     	WebPermission[] permissions = handler.getPermissions();
@@ -226,18 +226,18 @@ public class WebServer extends Service {
             return true; // no permissions required
         }
     	
-    	// read uid from session cookie
-    	JSONObject cookie = sessionHelper.getSessionData();
-    	if (cookie == null) {
+    	// check if remote session is valid
+    	if (!sessionHelper.isLoggedIn()) {
     	    return false;
     	}
-
-    	String identifier = cookie.optString("uid", null);
+    	
+    	// check userUId from stored session
+    	String identifier = sessionHelper.getUserUId();
     	if (identifier == null) {
     	    return false;
     	}
         
-        // check if all permissions provided
+        // check if all permissions provided to given identifier
         for (WebPermission action : permissions) {
             if (permissionLoader.isAuthorized(identifier, action)) {
                 return true;

@@ -9,11 +9,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import fi.iki.elonen.NanoHTTPD.Response;
-import net.libraya.gobdarchive.utils.HashUtil;
+import net.libraya.gobdarchive.utils.Environment;
 import net.libraya.gobdarchive.utils.exception.ServiceException;
 
 /**
@@ -22,6 +23,7 @@ import net.libraya.gobdarchive.utils.exception.ServiceException;
 public class SessionHelper {
 	
 	private WebPermissionLoader permLoader;
+	
 	private List<String> deleteQueue = new ArrayList<>();
 	
 	private IHTTPSession session;
@@ -96,9 +98,12 @@ public class SessionHelper {
 		if (result != null) {
 			JSONObject obj = getSessionData();
 			
-			obj.put("uid", result.get(permLoader.getPrimaryKeyColumn()));
-			obj.put("email", result.get(permLoader.getEmailColumn()));
-			obj.put("hash", HashUtil.sha256(password));
+			long expiresAt = System.currentTimeMillis() + (1000L * 60 * 60 * 24 * Environment.WP_SESSION_DAYS); // in days
+			
+			String userUId = result.get(permLoader.getPrimaryKeyColumn()).toString();
+			String sessionUId = permLoader.storedSessions.set(userUId, expiresAt, session.getRemoteHostName());
+					
+			obj.put("sessionUId", sessionUId);
 			
 			saveSession(obj); 
 			return true;
@@ -107,15 +112,48 @@ public class SessionHelper {
 		return false;
 	}
 	
-	public void logout() throws UnsupportedEncodingException {
+	public void logout() throws JSONException, SQLException, UnsupportedEncodingException {
+		JSONObject obj = getSessionData();
+		
+		if (obj.has("sessionUId")) {
+			permLoader.storedSessions.delete(obj.getString("sessionUId"));
+	 	}	
+
 		this.currentSessionData = new JSONObject();
 		deleteCookie("session"); // let cookie expire
 	}
 	
 	
-	public boolean isLoggedIn() throws UnsupportedEncodingException {
+	public boolean isLoggedIn() throws UnsupportedEncodingException, SQLException {
 		JSONObject obj = getSessionData();
-        return obj != null && obj.has("uid");
+        
+		if (!obj.has("sessionUId")) return false;
+		String sessionUId = obj.getString("sessionUId");
+
+		if (permLoader.storedSessions.isExpired(sessionUId)) {
+			permLoader.storedSessions.delete(sessionUId);
+			logout();
+			return false;
+		}
+		
+		return permLoader.storedSessions.getSession(sessionUId) != null;
+
+	}
+	
+	public String getUserUId() {
+		try {
+			return permLoader.storedSessions.getSession(getSessionUId()).getOrDefault("user_uid", null).toString();
+		} catch (Exception e) {
+			return null;
+		}
+	}
+	
+	public String getSessionUId() {
+		try {
+			return getSessionData().getString("sessionUId");
+		} catch (Exception e) {
+			return null;
+		}
 	}
 	
 	public void addMessage(MessageCategory category, String message) {

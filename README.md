@@ -90,7 +90,7 @@ mvn clean package
 ### 2. `.env` erstellen
 
 ```bash
-cp .env.example .env
+cp .env.template .env
 ```
 
 ### 3. Programmstart & Konfiguration
@@ -121,7 +121,9 @@ CREATE TABLE `users` (
 ```
 
 > **Info:**
-> Die **erforderlichen** Spalten können bei Bedarf auch anders genannt werden.
+> Die **erforderlichen** Spalten können konfiguriert werden. Sollte die konfigurierte Tabelle nicht bereits bestehen,
+  wird diese beim nächsten Start nach Konfiguration erstellt (der in der .env konfigurierte Benutzer benötigt die Berechtigung).
+  
 
 ### 4. Programmstart (Webinterface & API)
 ```bash

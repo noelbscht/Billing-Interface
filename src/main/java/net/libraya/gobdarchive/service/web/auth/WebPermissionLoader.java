@@ -1,7 +1,9 @@
 package net.libraya.gobdarchive.service.web.auth;
 
 import java.security.NoSuchAlgorithmException;
+import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Map;
 
 import org.json.JSONObject;
@@ -13,11 +15,46 @@ import net.libraya.gobdarchive.utils.exception.ServiceException;
 
 public class WebPermissionLoader {
 	
+	protected final StoredSessions storedSessions = new StoredSessions();
+	
 	private JSONObject tableColumns = Main.getConfigurations().tableColumnsCfg.getContent();
 	
 	private JSONObject permissions = Main.getConfigurations().permissionsCfg.getContent();
 	
-	public WebPermissionLoader() {}
+	public WebPermissionLoader() {
+		try {
+			initialize();
+		} catch (SQLException e) {
+			System.err.println("Couldn't create permission table: " + getTableName());
+		}
+	}
+	
+	private void initialize() throws SQLException {
+		
+		// create table if missing
+		try (Connection conn = SQL.getConnection(); 
+			Statement st = conn.createStatement()) {
+		
+            st.execute("""
+                CREATE TABLE IF NOT EXISTS `%s` (
+	              `%s` int(11) NOT NULL AUTO_INCREMENT, -- erforderlich
+				  `%s` varchar(255) DEFAULT NULL, -- erforderlich
+				  `%s` varchar(64) DEFAULT NULL, -- erforderlich
+				  `%s` int(11) NOT NULL, -- erforderlich
+				  `name` varchar(32) DEFAULT NULL,
+				  `surname` varchar(32) DEFAULT NULL,
+				  `company` varchar(32) DEFAULT NULL,
+				  PRIMARY KEY (`%s`)
+                );
+            """.formatted(getTableName(),
+            		getPrimaryKeyColumn(),
+            		getEmailColumn(),
+            		getPasswordColumn(),
+            		getPermissionIdentifierColumn(),
+            		getPrimaryKeyColumn()));
+
+		};
+	}
 	
 	/**
 	 * return configured table which should contain an identifier and a permission-level column.

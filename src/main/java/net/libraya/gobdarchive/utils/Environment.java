@@ -33,6 +33,7 @@ public class Environment {
 	public static final String WP_MYSQL_HOST = getString("WEBPAGE_MYSQL_HOST", "127.0.0.1");
 	public static final String WP_MYSQL_USER = getString("WEBPAGE_MYSQL_USER", "root");
 	public static final String WP_MYSQL_PASSWORD = getString("WEBPAGE_MYSQL_PASSWORD", "");
+	public static final int WP_SESSION_DAYS = getInt("WEBPAGE_SESSION_DURATION_DAYS", 1);
 	
 	// private constructor to prevent double initialization 
 	private Environment() {}

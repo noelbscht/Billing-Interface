@@ -33,7 +33,7 @@ public class SimpleTemplating {
 		// session and authorization
 		addVariable("messages", sessionHelper.getMessages());
 		addVariable("loggedIn", sessionHelper.isLoggedIn());
-		addVariable("uid", sessionHelper.getSessionData().optString("uid", null));
+		addVariable("uid", sessionHelper.getUserUId());
 		addVariable("WebPermission", WebPermission.class);
 		addMethod("isAuthorized", ws.getPermissionLoader(), "isAuthorized", String.class, WebPermission.class);
 		

@@ -58,7 +58,7 @@ public class WRDashboard extends WebRoute {
 			JSONObject response = new JSONObject();
 			
 			// user info
-			String uid = sessionHelper.getSessionData().optString("uid");
+			String uid = sessionHelper.getUserUId();
 			String ipv4 = session.getRemoteIpAddress();
 			String userAgent = session.getHeaders().getOrDefault("user-agent", "/");
 			
