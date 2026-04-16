@@ -3,7 +3,11 @@ package net.libraya.gobdarchive.utils.config;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.Provider;
+import java.security.Security;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.json.JSONObject;
@@ -68,7 +72,13 @@ public class Configurations {
 	            // write data to column configuration.
 	            FilesUtil.writeString(getPath(), table.toString(4), new String[] {
 	            		// commentaries
-	            		"Configuration for modifying authentication table column definitions."
+	            		"Configuration for modifying authentication table column definitions.",
+	            		"",
+	            		"hashing instances:",
+	            		String.join(", ", Arrays.stream(Security.getProviders()) // list of all possible algorithms
+	                    .flatMap(provider -> provider.getServices().stream())
+	                    .filter(s -> MessageDigest.class.getSimpleName().equals(s.getType()))
+	                    .map(Provider.Service::getAlgorithm).distinct().sorted().toList())
 	            });
 			}
 		});
