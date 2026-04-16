@@ -101,7 +101,7 @@ public class SessionHelper {
 			long expiresAt = System.currentTimeMillis() + (1000L * 60 * 60 * 24 * Environment.WP_SESSION_DAYS); // in days
 			
 			String userUId = result.get(permLoader.getPrimaryKeyColumn()).toString();
-			String sessionUId = permLoader.storedSessions.set(userUId, expiresAt, session.getRemoteHostName());
+			String sessionUId = permLoader.storedSessions.set(userUId, expiresAt, session.getRemoteIpAddress());
 					
 			obj.put("sessionUId", sessionUId);
 			
