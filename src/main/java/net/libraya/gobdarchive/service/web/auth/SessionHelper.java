@@ -46,13 +46,31 @@ public class SessionHelper {
 		try {
 	        if (currentSessionData != null) {
 	            String encoded = URLEncoder.encode(currentSessionData.toString(), "UTF-8");
-	            response.addHeader("Set-Cookie", "session=" + encoded + "; Path=/; Max-Age=31536000; HttpOnly");
+	            response.addHeader(
+                    "Set-Cookie",
+                    "session=" + encoded +
+                    "; Path=/" +
+                    "; Max-Age=31536000" +
+                    "; HttpOnly" +
+                    "; Secure" +
+                    "; SameSite=Strict"
+                );
+
 	        }
 	    } catch (Exception ignored) {}
 		
 		// set headers to let cookies expire
 		for (String key : deleteQueue) {
-            response.addHeader("Set-Cookie", key + "=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly");
+			response.addHeader(
+	            "Set-Cookie",
+	            key + "=" +
+	            "; Path=/" +
+	            "; Max-Age=0" +
+	            "; Expires=Thu, 01 Jan 1970 00:00:00 GMT" +
+	            "; HttpOnly" +
+	            "; Secure" +
+	            "; SameSite=Strict"
+	        );
         }
 		
 		// clear
