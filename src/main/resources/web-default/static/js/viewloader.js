@@ -13,19 +13,17 @@ function loadView(viewId) {
     // list of all views
     const views = document.querySelectorAll("[data-viewid]");
 
-
-    // current viewId
-    viewId = Number(viewId);
-    for (let i = 0; i < views.length; i++) {
-        let currentView = views[i];
-        if (i == viewId) {
-            if (currentView.classList.contains('hidden')) {
+	for (let currentView of views) {
+		let currentViewId = currentView.getAttribute("data-viewid");
+		
+		if (currentViewId == viewId) {
+			if (currentView.classList.contains('hidden')) {
                 currentView.classList.remove('hidden');
             }
             continue;
-        }
-        if (!currentView.classList.contains('hidden')) {
+		}
+		if (!currentView.classList.contains('hidden')) {
             currentView.classList.add('hidden');
         }
-    }
+	}
 }
