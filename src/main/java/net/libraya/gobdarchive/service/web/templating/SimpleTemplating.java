@@ -88,6 +88,9 @@ public class SimpleTemplating {
 	public String render(Path templatePath) throws IOException, TemplatingException {
 		String content = loadFromCache(templatePath);
 		
+		// render partial content
+		content = renderPartials(context, content);
+		
 		// render iterator tags
 		content = renderIteratorTags(context, content);
 		
@@ -263,6 +266,19 @@ public class SimpleTemplating {
 		
 		return content;
 	}
+	
+	private String renderPartials(Map<String, Object> scope, String content) {
+	    for (Map.Entry<String, Object> entry : scope.entrySet()) {
+	        if (entry.getValue() instanceof String) {
+	            String key = entry.getKey();
+	            String val = (String) entry.getValue();
+	            content = content.replace("{{ " + key + " }}", val)
+	                             .replace("{{"+key+"}}", val);
+	        }
+	    }
+	    return content;
+	}
+
 	
 	private boolean containsCondition(String content) {
 		return content.contains("{% if") && content.contains("{% /if %}");
