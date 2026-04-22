@@ -81,7 +81,7 @@ public class TemplatingHelper {
 	}
 
 	
-	public static Object[] extractArgs(Map<String, Object> context, String method) {
+	public static Object[] extractArgs(Map<String, Object> context, String method) throws TemplatingException {
 		int bracketOpen = method.indexOf("(");
 		int bracketClose = method.lastIndexOf(")");
 		
@@ -101,6 +101,14 @@ public class TemplatingHelper {
 	    Object[] args = new Object[raw.length];
 	    for (int i = 0; i < args.length; i++) {
 	    	String cleaned = raw[i].trim();
+	    	
+	    	// use variable if existence in context
+	    	if (context.containsKey(cleaned)) {
+	    	    args[i] = getValue(context, cleaned);
+	    	    
+	    	    continue;
+	    	}
+	    	
 	    	boolean isQuoted = (cleaned.startsWith("\"") && cleaned.endsWith("\""))
 	    	                || (cleaned.startsWith("'") && cleaned.endsWith("'"));
 

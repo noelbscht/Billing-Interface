@@ -88,11 +88,13 @@ public class SimpleTemplating {
 	public String render(Path templatePath) throws IOException, TemplatingException {
 		String content = loadFromCache(templatePath);
 		
-		content = renderVariables(context, content);
+		// render iterator tags
 		content = renderIteratorTags(context, content);
+		
+		// render condition tags
 		content = renderConditionTags(context, content);
 		
-		// render variables (because of remaining context from loops and partial content)
+		// render variables
 		content = renderVariables(context, content);
 		 
 		 return content;
