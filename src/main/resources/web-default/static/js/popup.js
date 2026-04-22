@@ -162,6 +162,8 @@ class PopupExportOptions extends Popup {
 
         elements.push(swNested.wrapper);
 		
+		elements.push(document.createElement("br"));
+		
 		// submit button
         const submitBtn = DOMPreset.button("Exportieren", "success", () => this.#submit());
         elements.push(submitBtn);
@@ -383,11 +385,11 @@ class PopupDocument extends Popup {
 		
 		// tablist
 		const tabOriginalBtn = DOMPreset.iconButton(this.filename != null ? this.filename : "Originaldatei",
-	  		["fa-regular", "fa-file", "fa-xs"], ["btn-primary", "btn-block"], () => this.showOriginal());
+	  		["fa-solid", "fa-file", "fa-sm"], ["btn-dark", "btn-block"], () => this.showOriginal());
 		const tabMetaBtn = DOMPreset.iconButton("Metadata.json",
-			["fa-regular", "fa-file", "fa-xs"], ["btn-primary", "btn-block"], () => this.showMetadata());
+			["fa-solid", "fa-file", "fa-sm"], ["btn-dark", "btn-block"], () => this.showMetadata());
 		
-		const tablist = DOMPreset.tablist("Tabs:", [tabOriginalBtn, tabMetaBtn]);
+		const tablist = DOMPreset.tablist([tabOriginalBtn, tabMetaBtn]);
 		
 		const content = document.createElement("div");
 		
@@ -527,27 +529,16 @@ class DOMPreset {
         return node;
     }
 	
-	static tablist(title, tabButtons = []) {
+	static tablist(tabButtons = []) {
 		const table = document.createElement("table");
 		const tbody =  document.createElement("tbody");
-		const titlerow = document.createElement("tr");
 		const tabrow = document.createElement("tr");
 		
-		table.classList.add("file-table", "sp-btm");
+		table.classList.add("tablist-table", "sp-btm");
 		table.appendChild(tbody);
 		
-		// title row
-		titlerow.classList.add("headline-row");
-		const titleCell = document.createElement("td");
-	    titleCell.innerText = title;
-	    titlerow.appendChild(titleCell);
-		for (let i = 1; i < tabButtons.length; i++) {
-	        titlerow.appendChild(document.createElement("td"));
-	    }
-		tbody.append(titlerow);
-		
 		// tab button row
-		tabrow.classList.add("tbl-itm-row");
+		tabrow.classList.add("tablist-row");
 	    for (let i = 0; i < tabButtons.length; i++) {
 	        const btnColumn = document.createElement("td");
 	        btnColumn.appendChild(tabButtons[i]);

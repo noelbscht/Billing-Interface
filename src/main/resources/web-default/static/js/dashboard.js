@@ -60,7 +60,7 @@ class ArchiveAction {
 
 	    // download
 	    if (response.ok && fileExpected) {
-			const filename = (args.archive_id != null ? args.archive_id : (args.export_options != null ? args.export_options : "export")) + ".zip";
+			const filename = (args.archive_id != null ? args.archive_id : (args.export_options != null ? "export_" + args.filter : "export")) + ".zip";
 			
 	        const blob = await response.blob();
 	        const url = URL.createObjectURL(blob);

@@ -20,16 +20,37 @@
                 Dashboard
             </h1>
             <span class="db-hr"></span>
-            <span class="db-info"><i class="fas fa-cloud"></i>Systeminformationen</span>
-            <a class="db-item" href="#backup" onclick="loadView(0)">Statistik</a>
-            <a class="db-item" href="#backup" onclick="loadView(1)">Backupsystem</a>
+            <span class="db-info"><i class="fas fa-cloud"></i>System</span>
+            <a class="db-item" href="#stats" onclick="loadView(0)">
+            	<i class="fa-solid fa-chart-simple fa-sm" style="color: #fff;"></i>
+            	Statistik
+           	</a>
+            <a class="db-item" href="#backup" onclick="loadView(1)">
+            	<i class="fa-solid fa-hard-drive fa-sm" style="color: #fff;"></i>
+            	Backupsystem
+           	</a>
+             {% if isAuthorized(uid, WebPermission.SYSTEM_MANAGE_USERS) %}
+            <a class="db-item" href="#users" onclick="loadView(2)">
+            	<i class="fa-solid fa-fingerprint fa-sm" style="color: #fff;"></i>
+            	Berechtigungen
+           	</a>
+             {% /if %}
             <span class="db-hr"></span>
             <span class="db-info"><i class="fa-solid fa-box-archive"></i> Archiv</span>
-            <a class="db-item" href="#entries" onclick="loadView(2)">Dokumente einsehen</a>
+            <a class="db-item" href="#entries" onclick="loadView(10)">
+            	<i class="fa-solid fa-file fa-sm" style="color: #fff;"></i>
+            	Dokumente einsehen
+           	</a>
             {% if isAuthorized(uid, WebPermission.ARCHIVE_WRITE) %}
-            <a class="db-item" href="#upload" onclick="loadView(3)">Datei hochladen</a>
+            <a class="db-item" href="#upload" onclick="loadView(11)">
+            	<i class="fa-solid fa-upload fa-sm" style="color: #fff;"></i>
+            	Datei hochladen
+           	</a>
              {% /if %}
-            <a class="db-item" id="exportOptions" href="#export" onclick="exportFilteredPopup.show()">Exportieren</a>
+            <a class="db-item" id="exportOptions" href="#export" onclick="exportFilteredPopup.show()">
+            	<i class="fa fa-download fa-sm" style="color: #fff;"></i>
+            	Exportieren
+           	</a>
             <span class="db-hr"></span>
             <a class="exit-btn" href="/">
                 <i class="fa-solid fa-house"></i>
@@ -40,13 +61,17 @@
             
             <!-- views -->
             <div class="element-box" data-viewid="0">
-            	<h4>Statistiken</h4>
+            	<h4>
+            		<i class="fa-solid fa-chart-simple" style="color: rgb(193, 108, 85);"></i>
+            		Statistiken
+            	</h4>
             	<hr>
             	<dt>Dateien insgesamt</dt>  <dd> {{ entries.size() }}</dd>
             </div>
             
             <div class="element-box" data-viewid="1">
 	           	<h4>
+	           		<i class="fa-regular fa-hard-drive" style="color: rgb(193, 108, 85);"></i>
 	           		Backupsystem
 	           		<span class="env-pill">
 						<span class="env-dot {% if !api_active %}inactive{% /if %}"></span>
@@ -63,12 +88,43 @@
 				  	<dt>Backup Server</dt> <dd>{{ backupsys.isAvailable() }}</dd>
 				</dl>
            </div>
-            <div name="filter" class="element-box" data-viewid="2">
-            	<h3>Dokumente</h3>
+            
+            {% if isAuthorized(uid, WebPermission.SYSTEM_MANAGE_USERS) %}
+            <div class="element-box" data-viewid="2">
+            <h3>
+	            <i class="fa-solid fa-fingerprint" style="color: rgb(193, 108, 85);"></i>
+	            Berechtigungen
+            </h3>
+            <hr>
+            <table class="item-table">
+	            <tr class="headline-row">
+	            	<td class="headline-col">Gruppenkennzeichnung</td>
+	            	<td class="headline-col">Mitglieder</td>
+	            	<td class="headline-col">Aktionen</td>
+	            </tr>
+	            {% iterate groupUId : wgHelper.getGroupUIds() %}
+	            <tr class="tbl-itm-row">
+	            	<td class="tbl-itm-col">{{ groupUId }}</td>
+	            	<td class="tbl-itm-col">{{ wgHelper.getUsers(groupUId).size() }}</td>
+	            	<td class="tbl-itm-col">
+	            		<button class="btn btn-dark btn-sm"><i class="fa-solid fa-address-book fa-xs" style="color: rgb(51, 164, 225);"></i>Mitglieder</button>
+	            		<button class="btn btn-dark btn-sm"><i class="fa-solid fa-address-book fa-xs" style="color: rgb(51, 164, 225);"></i>Rechte</button>
+	            	</td>
+	            </tr>
+	            {% /iterate %}
+            </table>
+            </div>
+            {% /if %}
+            
+            <div name="filter" class="element-box" data-viewid="10">
+            	<h3>
+            		<i class="fa-regular fa-file" style="color: rgb(193, 108, 85);"></i>
+            		Dokumente
+           		</h3>
             	<input type="button" name="" value="Filter anpassen" onclick="listFilterPopup.show()" class="filter-btn btn btn-primary">
             	<hr>
        			
-            	<table class="file-table">
+            	<table class="item-table">
 				    <tr class="headline-row">
 				        <td class="headline-col"> </td>
 				        <td class="headline-col">Eintrag</td>
@@ -83,11 +139,11 @@
 				        </td>
 				        <td class="tbl-itm-col stretched">{{ent}}</td>
 				        <td class="tbl-itm-col">
-				            <button onclick="view('{{ent}}')" class="btn btn-secondary btn-sm"><i class="fa-solid fa-eye fa-2xs"></i>Ansicht</button>
+				            <button onclick="view('{{ent}}')" class="btn btn-dark btn-sm"><i class="fa-solid fa-eye fa-xs" style="color: rgb(51, 164, 225);"></i>Ansicht</button>
 				            {% if isAuthorized(uid, WebPermission.ARCHIVE_WRITE) %}
-				            <button onclick="verify('{{ent}}')" class="btn btn-secondary btn-sm"><i class="fa fa-check fa-2xs" aria-hidden="true"></i>Validieren</button>
+				            <button onclick="verify('{{ent}}')" class="btn btn-dark btn-sm"><i class="fa fa-check fa-xs" style="color: rgb(51, 164, 225);"></i>Validieren</button>
 				            {% /if %}
-				            <button onclick="exportSingle('{{ent}}')" class="btn btn-secondary btn-sm"><i class="fa fa-download fa-2xs" aria-hidden="true"></i>Exportieren</button>
+				            <button onclick="exportSingle('{{ent}}')" class="btn btn-dark btn-sm"><i class="fa fa-download fa-xs" style="color: rgb(51, 164, 225);"></i>Exportieren</button>
 				        </td>
 				    </tr>
 				    {% /iterate %}
@@ -112,8 +168,11 @@
             </div>
             
             {% if isAuthorized(uid, WebPermission.ARCHIVE_WRITE) %}
-            <form class="element-box" id="upload" data-viewid="3">
-            	<h3>Hochladen</h3>
+            <form class="element-box" id="upload" data-viewid="11">
+            	<h3>
+            		<i class="fa-solid fa-upload" style="color: rgb(193, 108, 85);"></i>
+            		Hochladen
+           		</h3>
             	<hr>
             	<input type="file" name="attachment" class="form-control" required>
             	<select name="entry_type" class="form-control" required>
