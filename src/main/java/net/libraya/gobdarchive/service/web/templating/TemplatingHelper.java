@@ -5,13 +5,11 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
+import net.libraya.gobdarchive.service.web.templating.cache.CacheHandler;
 import net.libraya.gobdarchive.utils.exception.TemplatingException;
 
 public class TemplatingHelper {
-	
-	public static final ConcurrentHashMap<String, CachedTemplate> CACHE = new ConcurrentHashMap<String, CachedTemplate>();
 	
 	/**
 	 * return object itself if no method chaining, otherwise return last function output.
@@ -37,12 +35,13 @@ public class TemplatingHelper {
 	        	 Method targetMethod = null;
 	            
 	        	 // search trigger method in object
-	            for (Method m : current.getClass().getMethods()) {
-	                if (m.getName().equals(methodName) && m.getParameterCount() == args.length) {
-	                    targetMethod = m;
-	                    break;
-	                }
-	            }
+	        	 List<Method> candidates = CacheHandler.getMethods(current.getClass(), methodName);
+	        	 for (Method m : candidates) {
+	        	     if (m.getParameterCount() == args.length) {
+	        	         targetMethod = m;
+	        	         break;
+	        	     }
+	        	 }
 	            
 	            if (targetMethod == null) {
 	                throw new TemplatingException("No method '" + methodName + "' with " + args.length + " args in " + current.getClass().getSimpleName());
@@ -133,6 +132,9 @@ public class TemplatingHelper {
 	}
 	
 	public static Object getValue(Map<String, Object> context, String fullKey) throws TemplatingException {
+		Object direct = context.get(fullKey);
+		if (direct != null) return direct;
+		
 	    if (fullKey == null || fullKey.isEmpty()) return null;
 	    
 	    int firstBracket = fullKey.indexOf("(");

@@ -1,4 +1,4 @@
-package net.libraya.gobdarchive.service.web.templating;
+package net.libraya.gobdarchive.service.web.templating.cache;
 
 import java.io.IOException;
 import java.nio.file.Files;
