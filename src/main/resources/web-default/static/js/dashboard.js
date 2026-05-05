@@ -87,14 +87,16 @@ class ArchiveAction {
 	}
 }
 
-function verify(archiveId) {
+async function verify(archiveId) {
 	ArchiveAction.verify(archiveId)
-		.then(resp => {
+		.then(async resp => {
+			const data = await resp.json();
+			
 	        if (resp.ok) {
 	            sendMessage("Die Datei ist im Originalzustand.", "success", 2.5);
 	        } else {
 	            sendMessage("Die Datei ist nicht im Originalzustand.", "error", 2.5);
-				console.log(resp.json().errors);
+				console.log(data.errors);
 	        }
 	    }).catch(err => {
 	        console.error(err);
@@ -142,7 +144,7 @@ function commit() {
 	}
 	
 	ArchiveAction.commit(fileInput, metadata)
-	    .then(resp => {
+	    .then(async resp => {
 	        if (resp.ok) {
 	            sendMessage("Upload erfolgreich.", "success", 2.5);
 				window.location.reload();
