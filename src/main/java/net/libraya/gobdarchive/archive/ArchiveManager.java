@@ -102,8 +102,6 @@ public class ArchiveManager {
 	    JSONObject metadata = new JSONObject(Files.readString(metadataFile));
 	    String storedHash = metadata.getString("hash");
 	    String originalFileName = metadata.getString("original_file_name");
-	    String archiveIdFromMeta = metadata.getString("archive_id");
-
 
 	    // hash.txt
         Path hashFile = archiveFolder.resolve("hash.txt");
@@ -134,7 +132,7 @@ public class ArchiveManager {
         // logfile: check entry for this archiveId
         boolean logEntryFound = false;
         for (String line : Files.readAllLines(Environment.LOG_FILE)) {
-        	if (line.contains("| archiveId=" + archiveIdFromMeta + " |")) {
+        	if (line.contains("| archiveId=" + archiveId + " |")) {
                 logEntryFound = true;
 
                 if (!line.contains("| sha256=" + recalculatedHash + " |")) {
@@ -145,7 +143,7 @@ public class ArchiveManager {
         }
 
         if (!logEntryFound) {
-            result.addError("No log entry found for archiveId: " + archiveIdFromMeta);
+            result.addError("No log entry found for archiveId: " + archiveId);
         }
 
         // verify log hash chain
@@ -160,12 +158,12 @@ public class ArchiveManager {
             }
 
             String prevHash = line.substring(idx + 9).trim();
-
+            String contentWithoutPrev = line.substring(0, idx);
+            
             if (!prevHash.equals(lastHash)) {
                 result.addError("Log hash chain broken at: " + line);
             }
-
-            String contentWithoutPrev = line.substring(0, idx).trim();
+            
             lastHash = HashUtil.sha256(contentWithoutPrev);
         }
         
@@ -502,11 +500,11 @@ public class ArchiveManager {
 		 // sender provided a path like 2026/02/000003-invoice
         if (archiveId.contains("/")) {
             String[] parts = archiveId.split("/");
-            archiveId = parts[parts.length - 1];
+            archiveId = formatArchiveId(parts[parts.length - 1]);
         }
 
         // sender provided full folder name like 000003-invoice
-        if (archiveId.matches("\\d{6}-[a-z]+")) {
+        if (archiveId.matches("\\d{6}-[A-Za-z0-9_\\-]+")) {
         	archiveId = archiveId.split("-")[0];
         }
 
@@ -569,7 +567,7 @@ public class ArchiveManager {
         int idx = lastLine.lastIndexOf("prevHash=");
         if (idx == -1) return "000000";
 
-        String contentWithoutPrev = lastLine.substring(0, idx).trim();
+        String contentWithoutPrev = lastLine.substring(0, idx);
 
         return HashUtil.sha256(contentWithoutPrev);
     }
@@ -578,11 +576,15 @@ public class ArchiveManager {
      * appends a log entry to the auditlog file.
      * */
     private void writeLogEntry(LogAction action, String timestamp, String archiveId, String actorUId, String hash, LogActionStatus status, LogDetails details) throws IOException {
-        String prevHash = getLastLogHash();
-        
-        String actor = actorUId != null ? "userId=" + actorUId : "actor=system";
+    	String prevHash = getLastLogHash();
+    	
+    	String actor = actorUId != null ? "userId=" + actorUId : "actor=system";
         String finalDetails = details != null ? details.getDetailsFormatted() : "/";
         
+        // reformat archiveId
+        archiveId = formatArchiveId(archiveId);
+        
+        // create entry
         String entry = String.format("%s | action=%s | archiveId=%s | %s | details=%s | status=%s | sha256=%s | prevHash=%s\n",
         		timestamp, action, archiveId, actor, finalDetails, status, hash, prevHash);
 
